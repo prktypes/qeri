@@ -1,0 +1,18 @@
+# Normalize all text files to LF in the repo; Windows checkouts stay editable.
+* text=auto eol=lf
+
+# Windows scripts and batch files keep CRLF
+*.bat text eol=crlf
+*.ps1 text eol=crlf
+
+# Binaries
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.gif binary
+*.ico binary
+*.woff binary
+*.woff2 binary
+
+# Lockfiles: keep deterministic, do not merge line endings
+pnpm-lock.yaml text eol=lf

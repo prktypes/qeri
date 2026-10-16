@@ -1,0 +1,41 @@
+# Dependencies
+node_modules/
+.pnpm-store/
+
+# Build outputs
+dist/
+out/
+build/
+*.tsbuildinfo
+
+# Vite / tooling caches
+.vite/
+.turbo/
+.eslintcache
+.stylelintcache
+
+# Environment & secrets
+.env
+.env.*
+!.env.example
+
+# Test & coverage
+coverage/
+*.lcov
+
+# Logs
+*.log
+npm-debug.log*
+pnpm-debug.log*
+yarn-error.log*
+
+# Editor / OS noise
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/*
+!.vscode/extensions.json
+!.vscode/settings.json
+
+# Release artifacts (built zips are CI artifacts, not source)
+*.zip
