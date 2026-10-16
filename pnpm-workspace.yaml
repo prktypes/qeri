@@ -1,0 +1,5 @@
+packages:
+  # User-facing deployables
+  - apps/*
+  # Internal shared libraries (schemas, types, prompt logic)
+  - packages/*

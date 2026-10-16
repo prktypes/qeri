@@ -1,0 +1,23 @@
+{
+  "name": "qeri",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Qeri — AI that explains what you read. A Chrome extension that adds a lightweight understanding layer while you browse.",
+  "type": "module",
+  "packageManager": "pnpm@12.14.0",
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "dev:ext": "pnpm --filter qeri-extension dev",
+    "build:ext": "pnpm --filter qeri-extension build",
+    "zip:ext": "pnpm --filter qeri-extension zip",
+    "lint": "eslint .",
+    "lint:fix": "eslint . --fix",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "typecheck": "pnpm -r typecheck",
+    "test": "vitest run",
+    "test:watch": "vitest"
+  }
+}
