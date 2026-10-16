@@ -1,0 +1,18 @@
+{
+  "name": "@qeri/shared",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Qeri shared contracts: Zod schemas, types, constants, prompt config. Imported by the extension and the future backend so both sides of every boundary agree.",
+  "type": "module",
+  "main": "./src/index.ts",
+  "types": "./src/index.ts",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "scripts": {
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "zod": "^4.6.7"
+  }
+}
