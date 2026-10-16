@@ -3,3 +3,5 @@ packages:
   - apps/*
   # Internal shared libraries (schemas, types, prompt logic)
   - packages/*
+minimumReleaseAgeExclude:
+  - lucide-react@1.58.0

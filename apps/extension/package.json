@@ -1,0 +1,31 @@
+{
+  "name": "qeri-extension",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Qeri — AI that explains what you read. Chrome extension (Manifest V3).",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "zip": "node scripts/zip-dist.mjs",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@qeri/shared": "workspace:*",
+    "lucide-react": "^1.58.0",
+    "react": "^19.3.1",
+    "react-dom": "^19.3.1",
+    "zod": "^4.6.7"
+  },
+  "devDependencies": {
+    "@crxjs/vite-plugin": "^3.0.0",
+    "@tailwindcss/vite": "^4.3.3",
+    "@types/chrome": "^0.3.5",
+    "@types/react": "^19.3.0",
+    "@types/react-dom": "^19.3.0",
+    "@vitejs/plugin-react": "^6.1.2",
+    "tailwindcss": "^4.3.3",
+    "typescript": "~5.9.3",
+    "vite": "^8.3.4"
+  }
+}
