@@ -176,6 +176,40 @@ pnpm zip:ext       # → apps/extension/qeri-extension.zip (store artifact, veri
 - Some embedded post layouts without a reachable action bar get no chip yet.
 - No persistence, accounts, or network calls yet — by design (privacy-first default).
 
+### Troubleshooting: “nothing happens when I click Explain”
+
+Diagnose in this exact order — each symptom names the broken link:
+
+1. **Chip click never logs** — page DevTools console shows no `[qeri:cs] explain clicked`:
+   the content script is stale. Reload the extension (↻ on `chrome://extensions`) and
+   hard-refresh the X tab (`Ctrl+Shift+R`). Content scripts only inject on page loads
+   that happen _after_ install/reload.
+2. **Click logs, but the service worker console shows nothing** — the worker is dead:
+   open `chrome://extensions` → Qeri → _Inspect views: service worker_ and look for a
+   boot error. Then click a chip again.
+3. **SW logs `panel could not open automatically`** — Chrome's gesture restriction
+   blocked the automatic open (see the Chromium gotcha lesson below). The explanation is
+   still generated: a **purple `1` badge** appears on the toolbar icon — click it (or
+   press **Alt+Q**) and the panel shows the ready explanation.
+4. **Panel opens but shows “Nothing explained yet”** — panel console
+   (right-click in panel → _Inspect_) should log `state change → ready`. If it warns
+   `rejected malformed panel state`, send the logged object to engineering.
+5. **Chip shows `Failed`** — transport error; the ack text in the page console names it.
+
+### Engineering lesson: Chromium gesture scope for `sidePanel.open()`
+
+`chrome.sidePanel.open()` consumes a “user gesture”, and gesture state from a content
+script click only survives into the **synchronous part of the service worker’s
+onMessage task** (chromium issues 356181670 / 344767733). Any `await` before `open()` —
+even a storage write — silently destroys it. Qeri therefore:
+
+- opens the panel at the very top of the message handler, before any await;
+- generates the explanation afterwards (the panel mounts and reads state from session
+  storage — the ordering is safe because the panel both reads on mount and subscribes
+  to `onChanged`);
+- falls back to a toolbar badge (`1`) + `setPanelBehavior`-handled toolbar clicks and
+  the Alt+Q command, which are always-trusted gesture paths.
+
 ---
 
 ## Phase 0 & 1 — what was built and why (concepts, in implementation order)
@@ -428,3 +462,12 @@ to shared code during development.
   message/command/toolbar), React 19 + Tailwind v4 side panel (exhaustive state
   rendering), dependency-free zip packer, GitHub Actions CI. All gates green: build ✅
   tests 12/12 ✅ typecheck ✅ lint ✅ zip ✅.
+- **2026-10-17 — field bug: “nothing happens on Explain”.** Root cause: the service
+  worker called `sidePanel.open()` after awaits (storage writes + demo latency), which
+  destroys the user-gesture scope (chromium 356181670/344767733) — the panel silently
+  never opened while the explanation was generated into storage. Fix: panel opens
+  synchronously at message entry; generation happens after; blocked opens fall back to
+  a toolbar badge; `setPanelBehavior` + Alt+Q give always-reliable paths. Chip transport
+  gained a 12s ack timeout (can never stick on loading); structured `[qeri:sw]` /
+  `[qeri:cs]` / `[qeri:panel]` console logging shipped for field diagnosis.
+  Troubleshooting guide added to this document.

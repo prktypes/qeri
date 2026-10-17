@@ -37,9 +37,7 @@ function withTimeout<T>(promise: Promise<T>, ms: number, label: string): Promise
   });
 }
 
-export async function requestExplanation(
-  request: ExplainRequest,
-): Promise<ExplainAck> {
+export async function requestExplanation(request: ExplainRequest): Promise<ExplainAck> {
   LOG('sending explain request to service worker');
   try {
     const response: unknown = await withTimeout(
