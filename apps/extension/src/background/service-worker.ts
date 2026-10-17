@@ -36,14 +36,6 @@ async function publishPanelState(state: PanelState): Promise<void> {
   await chrome.storage.session.set({ [PANEL_STATE_STORAGE_KEY]: state });
 }
 
-async function readPanelState(): Promise<PanelState> {
-  const stored = await chrome.storage.session.get(PANEL_STATE_STORAGE_KEY);
-  const raw = stored[PANEL_STATE_STORAGE_KEY];
-  return typeof raw === 'object' && raw !== null && 'kind' in raw
-    ? (raw as PanelState)
-    : INITIAL_PANEL_STATE;
-}
-
 const sleep = (ms: number): Promise<void> => new Promise((resolve) => setTimeout(resolve, ms));
 
 /** Demo "generation": deterministic mock + artificial latency to exercise loading UI. */
