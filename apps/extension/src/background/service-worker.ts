@@ -18,9 +18,18 @@ import {
  *   1. Validate inbound Explain messages with the shared Zod schema.
  *   2. Run the demo explainer (Phase 3 swaps this single call for the API client).
  *   3. Publish state to chrome.storage.session so the side panel always renders
- *      a coherent state machine, whichever side wrote first.
+ *      a coherent state machine, whichever side writes first.
  *   4. Open the side panel anchored to the requesting tab.
+ *
+ * CHROMIUM GOTCHA (recorded 2026-10-17): sidePanel.open() consumes the "user gesture"
+ * only within the synchronous part of the message-delivery task. Any await BEFORE the
+ * open() call — even a storage write — kills the gesture and Chrome throws
+ * "may only be called in response to a user gesture" (see chromium issues 356181670
+ * and 344767733). Therefore: the panel opens FIRST, generation happens after; the
+ * panel mounts fast enough to read the 'generating' state from session storage.
  */
+
+const LOG = (...args: unknown[]): void => console.info('[qeri:sw]', ...args);
 
 /** Session storage helpers — the only place the storage key string is written verbatim. */
 async function publishPanelState(state: PanelState): Promise<void> {
@@ -46,60 +55,61 @@ async function generateExplanation(request: ExplainRequest): Promise<Explanation
   return explanation;
 }
 
+/**
+ * Opens the side panel for a tab. Returns true when opened, false when Chrome
+ * blocked it (gesture restrictions). Never throws: when the automatic open is
+ * blocked, a toolbar badge nudges the user to the reliable open paths
+ * (toolbar icon / Alt+Q) — the explanation is safe in session storage either way.
+ */
+async function openPanelForTab(tabId: number | undefined): Promise<boolean> {
+  try {
+    let target = tabId;
+    if (target === undefined) {
+      const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
+      target = tab?.id;
+      if (target === undefined) return false;
+    }
+    await chrome.sidePanel.open({ tabId: target });
+    void chrome.action.setBadgeText({ text: '' }).catch(() => {});
+    return true;
+  } catch (error: unknown) {
+    LOG('panel could not open automatically — use the toolbar icon or Alt+Q:', error);
+    void chrome.action.setBadgeBackgroundColor({ color: '#7c3aed' }).catch(() => {});
+    void chrome.action.setBadgeText({ text: '1' }).catch(() => {});
+    return false;
+  }
+}
+
 async function handleExplainRequest(
-  rawMessage: unknown,
-  senderTabId: number | undefined,
+  payload: unknown,
   respond: (ack: ExplainAck) => void,
 ): Promise<void> {
-  if (!isExplainRequestMessage(rawMessage)) {
-    respond({ ok: false, error: 'Malformed message envelope.' });
-    return;
-  }
-
-  const request = ExplainRequestSchema.safeParse(rawMessage.payload);
-  if (!request.success) {
-    const first = request.error.issues[0];
-    respond({
-      ok: false,
-      error: first ? `${first.path.join('.')}: ${first.message}` : 'Invalid request.',
-    });
+  const parsed = ExplainRequestSchema.safeParse(payload);
+  if (!parsed.success) {
+    const first = parsed.error.issues[0];
+    const message = first ? `${first.path.join('.')}: ${first.message}` : 'Invalid request.';
+    LOG('request rejected:', message);
+    respond({ ok: false, error: message });
     return;
   }
 
   try {
+    LOG('explain request validated — generating (demo mode)');
     await publishPanelState({
       kind: 'generating',
       startedAt: new Date().toISOString(),
     });
 
-    const explanation = await generateExplanation(request.data);
+    const explanation = await generateExplanation(parsed.data);
     await publishPanelState({ kind: 'ready', explanation });
 
-    await openPanelForTab(senderTabId);
-
+    LOG(`explanation ${explanation.id} ready in ${explanation.meta.generationMs}ms`);
     respond({ ok: true, explanationId: explanation.id });
   } catch (error: unknown) {
     const message = error instanceof Error ? error.message : 'Explanation failed.';
-    await publishPanelState({ kind: 'error', message });
-    await openPanelForTab(senderTabId);
+    LOG('generation failed:', message);
+    await publishPanelState({ kind: 'error', message }).catch(() => {});
     respond({ ok: false, error: message });
-  }
-}
-
-async function openPanelForTab(tabId: number | undefined): Promise<void> {
-  if (tabId === undefined) {
-    // No tab context (rare: invoked from devtools) — fall back to the focused window.
-    const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
-    if (tab?.id !== undefined) {
-      await chrome.sidePanel.open({ tabId: tab.id });
-    }
-    return;
-  }
-  // Tolerate benign re-open errors (panel already open for that tab).
-  try {
-    await chrome.sidePanel.open({ tabId });
-  } catch {
-    /* panel already visible */
   }
 }
 
@@ -108,29 +118,41 @@ async function openPanelForTab(tabId: number | undefined): Promise<void> {
 // ---------------------------------------------------------------------------
 
 chrome.runtime.onMessage.addListener((message, sender, respond) => {
-  void handleExplainRequest(message, sender.tab?.id, respond);
+  if (!isExplainRequestMessage(message)) {
+    return false; // not ours — leave the channel for other listeners
+  }
+
+  // Consume the user gesture IMMEDIATELY: open() must run inside the message
+  // delivery task, before any await (see the Chromium gotcha note above).
+  const tabId = sender.tab?.id;
+  void openPanelForTab(tabId).then((opened) => {
+    LOG(`panel ${opened ? 'opened' : 'NOT opened (blocked)'} for tab ${tabId ?? '(none)'}`);
+  });
+
+  // The explanation pipeline is independent of panel visibility: state lands in
+  // session storage, and the panel (open or opening) converges via onChanged.
+  void handleExplainRequest(message.payload, respond);
+
   // Keep the message channel open — respond() fires after async work completes.
   return true;
+});
+
+// Toolbar click opens the panel via browser-handled behavior — the most reliable
+// gesture path Chrome offers (works even when message-driven opens are blocked).
+chrome.sidePanel.setPanelBehavior({ openPanelOnActionClick: true }).catch((error) => {
+  LOG('setPanelBehavior failed:', error);
 });
 
 chrome.commands.onCommand.addListener((command) => {
   if (command === 'open-qeri-panel') {
     void (async () => {
       const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
-      if (tab?.id !== undefined) await openPanelForTab(tab.id);
+      const opened = await openPanelForTab(tab?.id);
+      LOG(`keyboard open: ${opened ? 'opened' : 'blocked'}`);
     })();
   }
 });
 
-// Toolbar click opens the panel for the focused tab (no popup in v1 — plan.md §MV3).
-chrome.action.onClicked.addListener((tab) => {
-  void openPanelForTab(tab.id);
-});
-
 chrome.runtime.onInstalled.addListener(() => {
   void publishPanelState(INITIAL_PANEL_STATE);
-});
-
-void readPanelState().then((state) => {
-  void publishPanelState(state.kind === 'idle' ? INITIAL_PANEL_STATE : state);
 });
