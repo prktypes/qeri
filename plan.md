@@ -10,16 +10,16 @@
 
 ## Decisions in force
 
-| #   | Decision                    | Value                                                                     |
-| --- | --------------------------- | ------------------------------------------------------------------------- |
-| 1   | AI provider                 | **OpenRouter** (model-agnostic, OpenAI-compatible structured output)      |
-| 2   | Backend                     | **Supabase** (Edge Function + Postgres + Auth) — arrives Phase 3–4        |
-| 3   | First supported site        | **X (x.com / twitter.com)** — extraction lives in one isolated adapter    |
-| 4   | Extension stack             | TypeScript 5.9 + React 19 + Vite 7 + **CRXJS 3** + Tailwind v4, MV3       |
-| 5   | Package manager             | **pnpm 12** (workspaces, one lockfile, one install)                       |
-| 6   | Current mode                | **Demo mode** — AI responses are mocked locally until Phase 3             |
-| 7   | Bundle safety               | AI/Supabase keys live only in the Edge Function, never in the extension   |
-| 8   | Contracts                   | Zod schemas in `packages/shared` — one source of truth for every boundary |
+| #   | Decision             | Value                                                                     |
+| --- | -------------------- | ------------------------------------------------------------------------- |
+| 1   | AI provider          | **OpenRouter** (model-agnostic, OpenAI-compatible structured output)      |
+| 2   | Backend              | **Supabase** (Edge Function + Postgres + Auth) — arrives Phase 3–4        |
+| 3   | First supported site | **X (x.com / twitter.com)** — extraction lives in one isolated adapter    |
+| 4   | Extension stack      | TypeScript 5.9 + React 19 + Vite 7 + **CRXJS 3** + Tailwind v4, MV3       |
+| 5   | Package manager      | **pnpm 12** (workspaces, one lockfile, one install)                       |
+| 6   | Current mode         | **Demo mode** — AI responses are mocked locally until Phase 3             |
+| 7   | Bundle safety        | AI/Supabase keys live only in the Edge Function, never in the extension   |
+| 8   | Contracts            | Zod schemas in `packages/shared` — one source of truth for every boundary |
 
 ## What we are building, in one page
 
@@ -109,17 +109,17 @@ qeri/
 
 ## Roadmap
 
-| Phase | Title                                    | Deliverable                                          | Status |
-| ----- | ---------------------------------------- | ---------------------------------------------------- | ------ |
-| 0     | Repo & tooling scaffolding               | Clean CI-ready monorepo; extension builds            | ✅     |
-| 1     | Extension foundation (MV3 + side panel)  | Explain chip injects; panel shows **demo** response  | ✅     |
-| 2     | X extraction engine                      | Robust post detection + fixtures + tests             | ⬜     |
-| 3     | AI explanation engine (OpenRouter)       | Real structured explanations; quota cache            | ⬜     |
-| 4     | Accounts & saved knowledge (Supabase)    | Save + history, row-level security                   | ⬜     |
-| 5     | Reliability, privacy, security           | Rate limits, injection hardening, a11y, Sentry       | ⬜     |
-| 6     | Private beta polish                      | Real fixes from testers                              | ⬜     |
-| 7     | Web store launch                         | Listing assets, privacy policy, review-safe builds   | ⬜     |
-| 8     | Post-launch: next sites, analytics       | articles/other extracts, cost dashboard              | ⬜     |
+| Phase | Title                                   | Deliverable                                         | Status |
+| ----- | --------------------------------------- | --------------------------------------------------- | ------ |
+| 0     | Repo & tooling scaffolding              | Clean CI-ready monorepo; extension builds           | ✅     |
+| 1     | Extension foundation (MV3 + side panel) | Explain chip injects; panel shows **demo** response | ✅     |
+| 2     | X extraction engine                     | Robust post detection + fixtures + tests            | ⬜     |
+| 3     | AI explanation engine (OpenRouter)      | Real structured explanations; quota cache           | ⬜     |
+| 4     | Accounts & saved knowledge (Supabase)   | Save + history, row-level security                  | ⬜     |
+| 5     | Reliability, privacy, security          | Rate limits, injection hardening, a11y, Sentry      | ⬜     |
+| 6     | Private beta polish                     | Real fixes from testers                             | ⬜     |
+| 7     | Web store launch                        | Listing assets, privacy policy, review-safe builds  | ⬜     |
+| 8     | Post-launch: next sites, analytics      | articles/other extracts, cost dashboard             | ⬜     |
 
 ---
 
@@ -140,15 +140,15 @@ In Chrome: open `chrome://extensions` → enable **Developer mode** (top right) 
 
 ### 2. Two-minute end-to-end check (the demo must do ALL of this)
 
-| Check | Expected result |
-| --- | --- |
-| Open <https://x.com/home> | Every feed post shows a small purple **✦ Explain** chip in its action bar |
-| Click **✦ Explain** | Qeri side panel opens on the right, shows a brief loading skeleton, then a structured demo explanation (summary / why it matters / key terms / example / caveats / follow-up chips) with a **demo mode** badge |
-| Scroll the feed (infinite scroll) | Newly appearing posts also get chips — no duplicates anywhere |
-| Click **✦ Explain** on another post | Panel content is replaced by that post's explanation |
-| Press **Alt+Q** | Panel toggles open; clicking the toolbar icon does the same |
-| Switch OS/browser theme | Panel follows light/dark automatically |
-| Click ✦ while the service worker is cold | First click may take a moment; no stuck “loading” state — chip recovers to `Retry`/`Failed` briefly on error |
+| Check                                    | Expected result                                                                                                                                                                                                |
+| ---------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Open <https://x.com/home>                | Every feed post shows a small purple **✦ Explain** chip in its action bar                                                                                                                                      |
+| Click **✦ Explain**                      | Qeri side panel opens on the right, shows a brief loading skeleton, then a structured demo explanation (summary / why it matters / key terms / example / caveats / follow-up chips) with a **demo mode** badge |
+| Scroll the feed (infinite scroll)        | Newly appearing posts also get chips — no duplicates anywhere                                                                                                                                                  |
+| Click **✦ Explain** on another post      | Panel content is replaced by that post's explanation                                                                                                                                                           |
+| Press **Alt+Q**                          | Panel toggles open; clicking the toolbar icon does the same                                                                                                                                                    |
+| Switch OS/browser theme                  | Panel follows light/dark automatically                                                                                                                                                                         |
+| Click ✦ while the service worker is cold | First click may take a moment; no stuck “loading” state — chip recovers to `Retry`/`Failed` briefly on error                                                                                                   |
 
 ### 3. Where to look when something misbehaves
 
@@ -281,7 +281,7 @@ extension bundle credential-free.
 ### Side panel (the reading surface)
 
 The side panel is a regular web page with extension-API access: **React 19 + Tailwind
-v4**, dark mode via `prefers-color-scheme`. It is stateless about *how* a post was
+v4**, dark mode via `prefers-color-scheme`. It is stateless about _how_ a post was
 obtained — it renders `Explanation` structs only. `usePanelState()` reads the state
 machine once on mount, then tracks `chrome.storage.onChanged`. The App switches
 exhaustively over the union — adding a new `kind` to the schema becomes a compile error
@@ -334,8 +334,8 @@ to shared code during development.
   "authorHandle": "@jane_doe",
   "sourceUrl": "https://x.com/jane_doe/status/123",
   "statusId": "123",
-  "mode": "simple",      // quick | simple | deep
-  "language": "en"
+  "mode": "simple", // quick | simple | deep
+  "language": "en",
 }
 ```
 
@@ -352,8 +352,13 @@ to shared code during development.
   "example": "…",
   "caveats": ["…"],
   "followUps": ["…"],
-  "meta": { "generator": "mock", "model": null, "cached": false,
-            "generationMs": 452, "schemaVersion": "0.1.0" }
+  "meta": {
+    "generator": "mock",
+    "model": null,
+    "cached": false,
+    "generationMs": 452,
+    "schemaVersion": "0.1.0",
+  },
 }
 ```
 
@@ -392,13 +397,13 @@ to shared code during development.
 
 ## Risks while building and how we handle them
 
-| Risk                                | Mitigation                                                                    |
-| ----------------------------------- | ----------------------------------------------------------------------------- |
-| X changes its DOM selectors         | Selectors isolated in `adapters/x.ts`; Phase 2 adds a recorded-fixture suite  |
-| Build tooling drift (CRXJS/Vite)    | Pinned Vite 7 + CRXJS 3 combo; lesson recorded above                          |
-| Secret leakage                      | `.gitignore` blocks `.env*`; keys will live server-side only (Phase 3)        |
-| Duplicate chip injection on re-scroll | WeakSet dedupe + idempotent decorate + batch-per-frame observer             |
-| Stuck loading states                | Validated ack contract; chip auto-recovers to Retry/Failed and panel has an error branch |
+| Risk                                  | Mitigation                                                                               |
+| ------------------------------------- | ---------------------------------------------------------------------------------------- |
+| X changes its DOM selectors           | Selectors isolated in `adapters/x.ts`; Phase 2 adds a recorded-fixture suite             |
+| Build tooling drift (CRXJS/Vite)      | Pinned Vite 7 + CRXJS 3 combo; lesson recorded above                                     |
+| Secret leakage                        | `.gitignore` blocks `.env*`; keys will live server-side only (Phase 3)                   |
+| Duplicate chip injection on re-scroll | WeakSet dedupe + idempotent decorate + batch-per-frame observer                          |
+| Stuck loading states                  | Validated ack contract; chip auto-recovers to Retry/Failed and panel has an error branch |
 
 ## Next up
 
