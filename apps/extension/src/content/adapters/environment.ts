@@ -7,8 +7,12 @@ export type SupportedHost = 'x' | 'twitter';
 
 export function detectHost(hostname: string): SupportedHost | null {
   if (hostname === 'x.com' || hostname === 'www.x.com') return 'x';
-  if (hostname === 'twitter.com' || hostname === 'www.twitter.com'
-    || hostname === 'mobile.twitter.com') return 'twitter';
+  if (
+    hostname === 'twitter.com' ||
+    hostname === 'www.twitter.com' ||
+    hostname === 'mobile.twitter.com'
+  )
+    return 'twitter';
   return null;
 }
 

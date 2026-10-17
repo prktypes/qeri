@@ -34,7 +34,10 @@ export const ExplainRequestSchema = z.object({
   /** Canonical https://x.com/.../status/<id> permalink when extractable. */
   sourceUrl: z.url('Source URL must be absolute https').nullish(),
   /** X status id when we managed to parse it from the permalink (Phase 2+ uses this). */
-  statusId: z.string().regex(/^\d{1,32}$/).nullish(),
+  statusId: z
+    .string()
+    .regex(/^\d{1,32}$/)
+    .nullish(),
   mode: ExplainModeSchema.default('simple'),
   language: z
     .string()

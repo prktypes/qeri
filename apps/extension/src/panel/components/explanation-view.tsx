@@ -15,16 +15,8 @@ function Section({ title, children }: { title: string; children: ReactNode }) {
 }
 
 export function ExplanationView({ explanation }: { explanation: Explanation }) {
-  const {
-    request,
-    summary,
-    whyItMatters,
-    keyTerms,
-    example,
-    caveats,
-    followUps,
-    meta,
-  } = explanation;
+  const { request, summary, whyItMatters, keyTerms, example, caveats, followUps, meta } =
+    explanation;
 
   return (
     <div className="flex min-h-full flex-col gap-3">

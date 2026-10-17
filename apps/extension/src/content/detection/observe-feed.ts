@@ -20,9 +20,7 @@ let onExtraction: OnExtraction | null = null;
 /** Decorate posts that already exist when the content script boots. */
 export function attachExistingPosts(callback: OnExtraction): void {
   onExtraction = callback;
-  document
-    .querySelectorAll<HTMLElement>(X_SELECTORS.article)
-    .forEach(schedule);
+  document.querySelectorAll<HTMLElement>(X_SELECTORS.article).forEach(schedule);
 }
 
 /** Watch the document for new supported posts; returns the observer for cleanup/tests. */

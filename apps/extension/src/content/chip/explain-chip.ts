@@ -49,7 +49,8 @@ const HOST_CSS = `
   .${LABEL_CLASS} { display: inline-block; }
 `;
 
-const BTN_HTML = '<span aria-hidden="true">✦</span><span class="qeri-explain-label">Explain</span>';
+const BTN_HTML =
+  '<span aria-hidden="true">✦</span><span class="qeri-explain-label">Explain</span>';
 
 /**
  * Decorate one article with an Explain chip appended to its action bar.

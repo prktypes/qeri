@@ -4,12 +4,12 @@
 > “understanding layer” while you browse — click **Explain** on any supported post and get
 > plain-English context without leaving the page.
 
-| | |
-| --- | --- |
-| Status | 🚧 Phase 0–1 — extension foundation, **demo mode** (no live AI yet) |
-| Target sites | X (x.com / twitter.com), more via adapters |
-| Stack | TypeScript · React 19 · Vite · CRXJS · Tailwind v4 · Chrome MV3 |
-| Docs | Full roadmap + engineering log: [`plan.md`](./plan.md) |
+|              |                                                                     |
+| ------------ | ------------------------------------------------------------------- |
+| Status       | 🚧 Phase 0–1 — extension foundation, **demo mode** (no live AI yet) |
+| Target sites | X (x.com / twitter.com), more via adapters                          |
+| Stack        | TypeScript · React 19 · Vite · CRXJS · Tailwind v4 · Chrome MV3     |
+| Docs         | Full roadmap + engineering log: [`plan.md`](./plan.md)              |
 
 ## Architecture
 

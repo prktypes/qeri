@@ -12,9 +12,7 @@ import {
  * why the worker listener returns true and always responds — a dangling promise here
  * would leave the chip flashing "loading" forever on some failure modes.
  */
-export async function requestExplanation(
-  request: ExplainRequest,
-): Promise<ExplainAck> {
+export async function requestExplanation(request: ExplainRequest): Promise<ExplainAck> {
   try {
     const response: unknown = await chrome.runtime.sendMessage({
       type: EXPLAIN_REQUEST_MSG,

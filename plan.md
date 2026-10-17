@@ -1,23 +1,23 @@
 # Qeri — Build Plan & Engineering Log
 
-> **Qeri** = *AI that explains what you read* — a browser extension that adds a lightweight
+> **Qeri** = _AI that explains what you read_ — a browser extension that adds a lightweight
 > “understanding layer” on top of the web. The reader stays on the page, clicks **Explain**
 > on any supported post, and gets a plain-English explanation without switching tabs.
 >
 > This document is the **single source of truth** for what we are building, how we build it,
-> and *why every technology was chosen*. It is updated after every build phase.
+> and _why every technology was chosen_. It is updated after every build phase.
 > Formal decisions in force:
 
-| # | Decision                                   | Value                                                                 |
-| - | ------------------------------------------ | --------------------------------------------------------------------- |
-| 1 | AI provider                                | **OpenRouter** (model-agnostic, OpenAI-compatible structured output)   |
-| 2 | Backend                                    | **Supabase** (Edge Function + Postgres + Auth)                        |
-| 3 | First supported site                       | **X (x.com / twitter.com)** — extractor is an isolated adapter         |
-| 4 | Extension stack                            | TypeScript + React + Vite + **CRXJS** + Tailwind v4, Manifest V3      |
-| 5 | Package manager                            | **pnpm** (workspaces/shared lockfile: one install per monorepo)       |
-| 6 | Name/background on the panel               | **Demo mode** — AI responses are mocked until Phase 3                 |
-| 7 | Extension bundle safety                    | AI key and Supabase token are **never safe** — only the Edge Function |
-| 8 | Contracts are typed                        | Zod schemas live in `packages/shared` — one source of truth           |
+| #   | Decision                     | Value                                                                 |
+| --- | ---------------------------- | --------------------------------------------------------------------- |
+| 1   | AI provider                  | **OpenRouter** (model-agnostic, OpenAI-compatible structured output)  |
+| 2   | Backend                      | **Supabase** (Edge Function + Postgres + Auth)                        |
+| 3   | First supported site         | **X (x.com / twitter.com)** — extractor is an isolated adapter        |
+| 4   | Extension stack              | TypeScript + React + Vite + **CRXJS** + Tailwind v4, Manifest V3      |
+| 5   | Package manager              | **pnpm** (workspaces/shared lockfile: one install per monorepo)       |
+| 6   | Name/background on the panel | **Demo mode** — AI responses are mocked until Phase 3                 |
+| 7   | Extension bundle safety      | AI key and Supabase token are **never safe** — only the Edge Function |
+| 8   | Contracts are typed          | Zod schemas live in `packages/shared` — one source of truth           |
 
 ## What we are building, in one page
 
@@ -100,17 +100,17 @@ qeri/
 
 ## Roadmap
 
-| Phase | Title                                  | Deliverable                                        | Status |
-| ----- | -------------------------------------- | -------------------------------------------------- | ------ |
-| 0     | Repo & tooling scaffolding             | Clean CI-ready monorepo; extension builds          | 🚧      |
-| 1     | Extension foundation (MV3 + side panel)| Explain chip injects; panel shows **demo** response| 🚧      |
-| 2     | X extraction engine                    | Robust post detection + fixtures + tests           | ⬜      |
-| 3     | AI explanation engine (OpenRouter)     | Real structured explanations; quota cache          | ⬜      |
-| 4     | Accounts & saved knowledge (Supabase)  | Save + history, row-level security                 | ⬜      |
-| 5     | Reliability, privacy, security         | Rate limits, injection hardening, a11y, Sentry     | ⬜      |
-| 6     | Private beta polish                    | Real fixes from testers                            | ⬜      |
-| 7     | Web store launch                       | Listing assets, privacy policy, review-safe builds | ⬜      |
-| 8     | Post-launch: next sites, analytics     | articles/other extracts, cost dashboard            | ⬜      |
+| Phase | Title                                   | Deliverable                                         | Status |
+| ----- | --------------------------------------- | --------------------------------------------------- | ------ |
+| 0     | Repo & tooling scaffolding              | Clean CI-ready monorepo; extension builds           | 🚧     |
+| 1     | Extension foundation (MV3 + side panel) | Explain chip injects; panel shows **demo** response | 🚧     |
+| 2     | X extraction engine                     | Robust post detection + fixtures + tests            | ⬜     |
+| 3     | AI explanation engine (OpenRouter)      | Real structured explanations; quota cache           | ⬜     |
+| 4     | Accounts & saved knowledge (Supabase)   | Save + history, row-level security                  | ⬜     |
+| 5     | Reliability, privacy, security          | Rate limits, injection hardening, a11y, Sentry      | ⬜     |
+| 6     | Private beta polish                     | Real fixes from testers                             | ⬜     |
+| 7     | Web store launch                        | Listing assets, privacy policy, review-safe builds  | ⬜     |
+| 8     | Post-launch: next sites, analytics      | articles/other extracts, cost dashboard             | ⬜     |
 
 ### Welcome to the repo (first commit only)
 
@@ -142,10 +142,10 @@ pnpm --filter qeri-extension build
 2. Go to <https://x.com/home>.
 3. Confirm each feed post gets a small ✦ **Explain** chip.
 4. Click **Explain** → the Qeri panel opens on the right in “demo mode”, feeding a canned
-   but realistic explanation that *mirrors the schema* used by the real AI in Phase 3.
+   but realistic explanation that _mirrors the schema_ used by the real AI in Phase 3.
 5. Alt+Q (or the toolbar button) opens the panel at any time.
 6. `pnpm --filter qeri-extension test:watch` for continuous testing; run `pnpm --filter
-   qeri-extension lint` before you commit.
+qeri-extension lint` before you commit.
 
 **Development loop (hot reload):**
 
@@ -159,7 +159,7 @@ pnpm --filter qeri-extension dev
 
 ### Concepts (explained simply)
 
-Every heading below is a *concept* implemented in this session, in implementation order.
+Every heading below is a _concept_ implemented in this session, in implementation order.
 
 #### Monorepo (one repo for everything)
 
@@ -184,7 +184,7 @@ no copy-and-paste between packages.
 Chrome only allowsées extensions that declare **what they can touch**: from a
 `manifest.json` (built by `apps/extension/manifest.ts`):
 
-- `permissions` = scope, declared *explicitly* — `["storage", "sidePanel"]` only so far.
+- `permissions` = scope, declared _explicitly_ — `["storage", "sidePanel"]` only so far.
 - `content_scripts` = code that runs in the page, matched by URL — we match
   `x.com`/`twitter.com` only.
 - `background` = durable logic (our service worker).
@@ -205,7 +205,7 @@ React + Tailwind therefore work naturally inside an extension, not just web page
 
 #### Shadow DOM (style isolation for the content script)
 
-The Explain chip is injected into *X’s own page*. If we styled it with global CSS,
+The Explain chip is injected into _X’s own page_. If we styled it with global CSS,
 it would fight with X’s styles (and vice versa — e.g. Tailwind’s CSS reset would leak
 into X). Instead:
 
@@ -218,7 +218,8 @@ into X). Instead:
 #### Service worker (the MV3 background)
 
 In MV3 the background is an **event-driven service worker** — long-lived, but still
- goes cold for long-running work. We:
+goes cold for long-running work. We:
+
 - register the panel-on-click behavior at startup (`chrome.sidePanel.setPanelBehavior`);
 - listen for two lightweight signals: the **Explain** message from the content script and
   the **Alt+Q** command, then open the side panel for that tab.
@@ -234,7 +235,7 @@ storage area shared by the worker and the panel is cleanest. We use
 
 We deliberately choose a **discriminated-union state shape**
 (`{ kind: 'generating' \| 'ready' \| 'error', explanation? }`), so the panel can render
-every state as a valid exhaustive switch, and *no state possible can be missing keys*
+every state as a valid exhaustive switch, and _no state possible can be missing keys_
 — invalid keys can’t be stored because the same Zod schema re-validates anything that
 goes into the store.
 
@@ -252,8 +253,8 @@ X is an **infinite scroll** app. We don’t want bulky polling; instead:
 
 #### “Explain” chip (the trigger)
 
-Per article, we insert a small, `aria-label`ed “✦ Explain” anchor; we attach it *at
-interactive points that the user can’t reach with a hover on X itself* — by default at
+Per article, we insert a small, `aria-label`ed “✦ Explain” anchor; we attach it _at
+interactive points that the user can’t reach with a hover on X itself_ — by default at
 the right side of the action bar. The click is async — Chrome’s
 `chrome.runtime.sendMessage` sends a message, and errors are surfaced with a short
 inline status instead of a blocking alert.
@@ -261,8 +262,9 @@ inline status instead of a blocking alert.
 #### Side panel (the reading surface)
 
 Chrome’s side panel is a regular web page with access to extension APIs, so our panel is:
+
 - **React 19 + Tailwind v4** — the modern stack (dark mode via `prefers-color-scheme`).
-- Stateless about *how the post was obtained*: it renders `Explanation` structs only.
+- Stateless about _how the post was obtained_: it renders `Explanation` structs only.
 - Shows every branch of the state machine: header → post preview → loading skeleton →
   structured sections → error + follow-up place-holders (real Phase 3 wiring).
 
@@ -284,7 +286,7 @@ UI, storage, or message flow.
 #### Contract-first typing with Zod
 
 All payloads that cross boundaries (content → worker, worker → panel, later client →
-backend) have schemas in `packages/shared`. TypeScript types are *derived*
+backend) have schemas in `packages/shared`. TypeScript types are _derived_
 (`z.infer<typeof X>`), so there is never a drift between “shape as documented” and
 “shape as enforced”.
 
@@ -308,9 +310,9 @@ name — the same import works in the extension and any future backend.
 ```jsonc
 {
   "text": "Higher interest rates are compressing startup valuations.",
-  "authorHandle": "@jane_doe",          // canonical handle (we prepend nothing)
-  "overrideStatusId": null,             // optional status hash for later pagination
-  "sourceUrl": "https://x.com/jane_doe/status/123"
+  "authorHandle": "@jane_doe", // canonical handle (we prepend nothing)
+  "overrideStatusId": null, // optional status hash for later pagination
+  "sourceUrl": "https://x.com/jane_doe/status/123",
 }
 ```
 
@@ -327,7 +329,7 @@ name — the same import works in the extension and any future backend.
   "keyTerms": [{ "term": "…", "definition": "…" }],
   "practicalExample": "…",
   "caveats": ["…"],
-  "followUps": ["…"]
+  "followUps": ["…"],
 }
 ```
 
@@ -357,12 +359,12 @@ name — the same import works in the extension and any future backend.
 
 ## Risks while building (kids: how we handle them)
 
-| Risk                                | Current mitigation                                   |
-| ----------------------------------- | ------------------------------------------------------|
-| X changes selectors                 | Selectors isolated in the adapter; fixture suite Phase 2|
-| Cyclic deps between apps            | `packages/shared` holds logic and types only — no app import searches from it |
-| MV3 requires build pipeline tricks  | CRXJS handles hashed assets and entry wiring for us   |
-| Accidentally shipping secrets       | `.gitignore` blocks `.env` files; CI checks built dist for `env\| Api-?submitted\|secret\|(?:API_\\|KEY\|(\"\\\\?)` patterns |
+| Risk                               | Current mitigation                                                                                  |
+| ---------------------------------- | --------------------------------------------------------------------------------------------------- |
+| X changes selectors                | Selectors isolated in the adapter; fixture suite Phase 2                                            |
+| Cyclic deps between apps           | `packages/shared` holds logic and types only — no app import searches from it                       |
+| MV3 requires build pipeline tricks | CRXJS handles hashed assets and entry wiring for us                                                 |
+| Accidentally shipping secrets      | `.gitignore` blocks `.env` files; CI checks built dist for `env\| Api-?submitted\|secret\|(?:API_\\ | KEY\|(\"\\\\?)` patterns |
 
 ## Next up
 

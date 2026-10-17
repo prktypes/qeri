@@ -30,7 +30,10 @@ function truncate(text: string, max: number): string {
 }
 
 function normalizeWhitespace(text: string): string {
-  return text.replace(/[^\S\n]+/g, ' ').replace(/\n{3,}/g, '\n\n').trim();
+  return text
+    .replace(/[^\S\n]+/g, ' ')
+    .replace(/\n{3,}/g, '\n\n')
+    .trim();
 }
 
 export interface ExtractionResult {
@@ -43,9 +46,7 @@ export interface ExtractionResult {
  * - quoted previews nested inside another article (explain the outer post instead)
  * - articles with no meaningful text (pure media posts → Phase 2 will add captions)
  */
-export function extractExplainRequest(
-  article: HTMLElement,
-): ExtractionResult | null {
+export function extractExplainRequest(article: HTMLElement): ExtractionResult | null {
   if (!isSupportedSite(window.location.hostname)) return null;
   if (detectHost(window.location.hostname) === null) return null;
   if (article.parentElement?.closest(X_SELECTORS.article)) return null; // quoted preview
