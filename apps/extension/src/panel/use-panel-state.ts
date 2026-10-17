@@ -21,7 +21,12 @@ export function usePanelState(): PanelState {
       const stored = await chrome.storage.session.get(PANEL_STATE_STORAGE_KEY);
       if (cancelled) return;
       const parsed = PanelStateSchema.safeParse(stored[PANEL_STATE_STORAGE_KEY]);
-      if (parsed.success) setState(parsed.data);
+      if (parsed.success) {
+        console.info('[qeri:panel]', 'mounted with state:', parsed.data.kind);
+        setState(parsed.data);
+      } else {
+        console.info('[qeri:panel]', 'mounted with no stored state — showing idle');
+      }
     })();
 
     const listener = (
@@ -32,7 +37,12 @@ export function usePanelState(): PanelState {
       const change = changes[PANEL_STATE_STORAGE_KEY];
       if (!change) return;
       const parsed = PanelStateSchema.safeParse(change.newValue);
-      if (parsed.success) setState(parsed.data);
+      if (parsed.success) {
+        console.info('[qeri:panel]', 'state change →', parsed.data.kind);
+        setState(parsed.data);
+      } else {
+        console.warn('[qeri:panel]', 'rejected malformed panel state:', change.newValue);
+      }
     };
 
     chrome.storage.onChanged.addListener(listener);
