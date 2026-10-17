@@ -1,5 +1,5 @@
 import type { ExplainRequest } from '@qeri/shared';
-import type { ExtractionResult } from '../adapters/x';
+import type { SiteExtraction } from '../adapters/types';
 import { requestExplanation } from '../messaging/send-explain';
 
 /**
@@ -56,7 +56,7 @@ const BTN_HTML =
  * Decorate one article with an Explain chip appended to its action bar.
  * Idempotent: an article that already carries a chip is skipped untouched.
  */
-export function decorateArticle(extraction: ExtractionResult): void {
+export function decorateArticle(extraction: SiteExtraction): void {
   const { element: article, request } = extraction;
 
   if (article.querySelector(`.${HOST_CLASS}`)) return;
