@@ -6,7 +6,7 @@
 
 |              |                                                                     |
 | ------------ | ------------------------------------------------------------------- |
-| Status       | 🚧 Phase 0–1 — extension foundation, **demo mode** (no live AI yet) |
+| Status       | ✅ Phase 0–1 built — extension foundation, **demo mode** (no live AI yet) |
 | Target sites | X (x.com / twitter.com), more via adapters                          |
 | Stack        | TypeScript · React 19 · Vite · CRXJS · Tailwind v4 · Chrome MV3     |
 | Docs         | Full roadmap + engineering log: [`plan.md`](./plan.md)              |
@@ -27,6 +27,7 @@ X post ──► content script (✦ Explain chip, shadow DOM)
   new website never touches the explanation engine.
 - **Contract-first**: request/response schemas are Zod-defined in `packages/shared` and
   shared across every boundary.
+- **Verify after changes**: `docs/manual-qa-phase-1.md` is the two-minute manual check.
 
 ## Getting started
 
