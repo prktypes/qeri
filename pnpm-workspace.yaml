@@ -3,5 +3,11 @@ packages:
   - apps/*
   # Internal shared libraries (schemas, types, prompt logic)
   - packages/*
+
+# Life-cycle-script allowlist: pnpm 12 blocks install scripts by default.
+# esbuild's postinstall only verifies/downloads its platform binary — required by Vite.
 minimumReleaseAgeExclude:
   - lucide-react@1.58.0
+  - eslint@10.13.0
+allowBuilds:
+  esbuild: true
