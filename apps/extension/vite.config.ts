@@ -4,7 +4,7 @@ import { crx } from '@crxjs/vite-plugin';
 import tailwindcss from '@tailwindcss/vite';
 import { fileURLToPath } from 'node:url';
 
-import manifest from './manifest';
+import manifest from './manifest.ts';
 
 export default defineConfig({
   // CRXJS reads the MV3 manifest and turns every declared entry (service worker,
