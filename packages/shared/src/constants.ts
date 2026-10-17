@@ -15,6 +15,13 @@ export const DEFAULT_EXPLAIN_LANGUAGE = 'en';
  */
 export const MAX_EXPLAIN_INPUT_CHARS = 4000;
 
+/** Longest surrounding-thread text (quoted post / parent) attached as context. */
+export const MAX_CONTEXT_CHARS = 2000;
+
+/** Kinds of thread context an adapter can attach to an ExplainRequest. */
+export const EXPLAIN_CONTEXT_KINDS = ['quoted', 'parent', 'thread'] as const;
+export type ExplainContextKind = (typeof EXPLAIN_CONTEXT_KINDS)[number];
+
 /** Maximum author-handle length accepted from the page. */
 export const MAX_AUTHOR_HANDLE_CHARS = 64;
 

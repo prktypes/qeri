@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { ExplainRequestSchema, ExplanationSchema } from './explain';
 import { createMockExplanation } from '../mocks/mock-explanation';
-import { MAX_EXPLAIN_INPUT_CHARS } from '../constants';
+import { MAX_CONTEXT_CHARS, MAX_EXPLAIN_INPUT_CHARS } from '../constants';
 
 describe('ExplainRequestSchema', () => {
   it('fills defaults for mode and language', () => {
@@ -36,6 +36,28 @@ describe('ExplainRequestSchema', () => {
     expect(ok.success).toBe(true);
     const relative = ExplainRequestSchema.safeParse({ text: 'x', sourceUrl: '/a/status/1' });
     expect(relative.success).toBe(false);
+  });
+
+  it('accepts optional thread context with its own size cap', () => {
+    const ok = ExplainRequestSchema.safeParse({
+      text: 'reply here',
+      context: 'this is the parent post',
+      contextKind: 'parent',
+    });
+    expect(ok.success).toBe(true);
+
+    const tooLong = ExplainRequestSchema.safeParse({
+      text: 'x',
+      context: 'c'.repeat(MAX_CONTEXT_CHARS + 1),
+    });
+    expect(tooLong.success).toBe(false);
+
+    const badKind = ExplainRequestSchema.safeParse({
+      text: 'x',
+      context: 'c',
+      contextKind: 'unrelated',
+    });
+    expect(badKind.success).toBe(false);
   });
 });
 

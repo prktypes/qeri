@@ -1,8 +1,10 @@
 import { z } from 'zod';
 import {
   DEFAULT_EXPLAIN_LANGUAGE,
+  EXPLAIN_CONTEXT_KINDS,
   EXPLAIN_MODES,
   MAX_AUTHOR_HANDLE_CHARS,
+  MAX_CONTEXT_CHARS,
   MAX_EXPLAIN_INPUT_CHARS,
 } from '../constants';
 
@@ -38,6 +40,10 @@ export const ExplainRequestSchema = z.object({
     .string()
     .regex(/^\d{1,32}$/)
     .nullish(),
+  /** Surrounding thread text — quote of another post or the parent of a reply. */
+  context: z.string().max(MAX_CONTEXT_CHARS).nullish(),
+  /** What kind of surrounding text `context` holds, so the UI can label it. */
+  contextKind: z.enum(EXPLAIN_CONTEXT_KINDS).nullish(),
   mode: ExplainModeSchema.default('simple'),
   language: z
     .string()
