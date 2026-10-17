@@ -129,7 +129,21 @@ const STOPWORDS = new Set([
 
 function summaryFor(request: ExplainRequest, topic: string): string {
   const by = request.authorHandle ? ` by ${request.authorHandle}` : '';
-  return `This is a demo explanation of a post${by}. The opening idea was: “${topic}” — in Phase 3 a language model will rewrite this into an accurate plain-English summary.`;
+  return `This is a demo explanation of a post${by}. The opening idea was: “${topic}”${
+    contextNoteFor(request)
+  } — in Phase 3 a language model will rewrite this into an accurate plain-English summary.`;
+}
+
+/** Demo narration for thread context: describes shape, echoes nothing as fact. */
+function contextNoteFor(request: ExplainRequest): string {
+  if (!request.context || !request.contextKind) return '';
+  const shape =
+    request.contextKind === 'quoted'
+      ? 'quotes another post'
+      : request.contextKind === 'parent'
+        ? 'is a reply inside a thread'
+        : 'has surrounding thread context';
+  return ` (this post ${shape}, shown below)`;
 }
 
 function whyItMattersFor(request: ExplainRequest): string {

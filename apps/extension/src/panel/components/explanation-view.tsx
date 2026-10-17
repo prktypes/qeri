@@ -36,6 +36,23 @@ export function ExplanationView({ explanation }: { explanation: Explanation }) {
         </p>
       </div>
 
+      {/* Thread context (Phase 2): quoted-post or parent-post snippet, labeled by kind */}
+      {request.context && (
+        <Section
+          title={
+            request.contextKind === 'quoted'
+              ? 'Quotes this post'
+              : request.contextKind === 'parent'
+                ? 'Replying to'
+                : 'Thread context'
+          }
+        >
+          <p className="line-clamp-4 text-sm leading-relaxed whitespace-pre-line text-neutral-600 dark:text-neutral-400">
+            {request.context}
+          </p>
+        </Section>
+      )}
+
       <Section title="In simple terms">
         <p className="text-sm leading-relaxed text-neutral-800 dark:text-neutral-200">
           {summary}
