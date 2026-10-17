@@ -77,7 +77,9 @@ function extractPost(article: HTMLElement): SiteExtraction | null {
 }
 
 /** Quoted-post context wins over parent context when both are present. */
-function extractContext(article: HTMLElement): { text: string; kind: ExplainContextKind } | null {
+function extractContext(
+  article: HTMLElement,
+): { text: string; kind: ExplainContextKind } | null {
   return extractQuotedContext(article) ?? extractParentContext(article);
 }
 

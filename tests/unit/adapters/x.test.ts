@@ -7,6 +7,7 @@ import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { beforeAll, describe, expect, it } from 'vitest';
 import { MAX_EXPLAIN_INPUT_CHARS } from '@qeri/shared';
+import type { SiteExtraction } from '../../../apps/extension/src/content/adapters/types';
 import { isOutermost } from '../../../apps/extension/src/content/detection/observe-feed';
 import {
   X_SELECTORS,
@@ -25,7 +26,10 @@ let feedSectionGuard: Document;
 
 beforeAll(() => {
   const parse = (name: string): Document =>
-    new DOMParser().parseFromString(readFileSync(resolve(FIXTURE_DIR, name), 'utf8'), 'text/html');
+    new DOMParser().parseFromString(
+      readFileSync(resolve(FIXTURE_DIR, name), 'utf8'),
+      'text/html',
+    );
 
   feedBasic = parse('feed-basic.html');
   feedQuoted = parse('feed-quoted.html');
@@ -39,33 +43,44 @@ function articles(doc: Document): HTMLElement[] {
   return Array.from(doc.querySelectorAll<HTMLElement>(X_SELECTORS.article));
 }
 
+/** Asserts presence and narrows the element type (no non-null assertions allowed). */
+function need(article: HTMLElement | undefined, hint: string): HTMLElement {
+  expect(article, hint).toBeDefined();
+  return article as HTMLElement;
+}
+
+/** Extract with an assertion; narrows the result so reads need no assertions. */
+function needsExtraction(article: HTMLElement): SiteExtraction {
+  const extraction = xAdapter.extract(article);
+  expect(extraction).not.toBeNull();
+  return extraction as SiteExtraction;
+}
+
 describe('x adapter on recorded fixtures', () => {
   describe('feed-basic', () => {
     it('extracts both ordinary timeline posts with no context', () => {
       const [postA, postB] = articles(feedBasic);
-      const a = xAdapter.extract(postA!);
-      const b = xAdapter.extract(postB!);
+      const a = needsExtraction(need(postA, 'feed-basic post A'));
+      const b = needsExtraction(need(postB, 'feed-basic post B'));
 
-      expect(a).not.toBeNull();
-      expect(a!.request.text).toBe(
+      expect(a.request.text).toBe(
         "Vector databases trade recall for latency, and most teams don't realize they are paying in precision.",
       );
-      expect(a!.request.authorHandle).toBe('@quantaresearch');
-      expect(a!.request.sourceUrl).toBe('https://x.com/quantaresearch/status/1799834000000000000');
-      expect(a!.request.statusId).toBe('1799834000000000000');
-      expect(a!.request.context).toBeNull();
-      expect(a!.request.contextKind).toBeNull();
-      expect(a!.request.mode).toBe('simple');
-      expect(a!.request.language).toBe('en');
-      expect(a!.element).toBe(postA);
-
-      expect(b).not.toBeNull();
-      expect(b!.request.text).toBe(
+      expect(a.request.authorHandle).toBe('@quantaresearch');
+      expect(a.request.sourceUrl).toBe(
+        'https://x.com/quantaresearch/status/1799834000000000000',
+      );
+      expect(a.request.statusId).toBe('1799834000000000000');
+      expect(a.request.context).toBeNull();
+      expect(a.request.contextKind).toBeNull();
+      expect(a.request.mode).toBe('simple');
+      expect(a.request.language).toBe('en');
+      expect(b.request.text).toBe(
         'Rewriting your whole stack in rust is a fun weekend but rarely a product decision.',
       );
-      expect(b!.request.authorHandle).toBe('@miacodes');
-      expect(b!.request.statusId).toBe('1799835000000000000');
-      expect(b!.request.context).toBeNull();
+      expect(b.request.authorHandle).toBe('@miacodes');
+      expect(b.request.statusId).toBe('1799835000000000000');
+      expect(b.request.context).toBeNull();
     });
 
     it('detects both posts as outermost (chip-eligible)', () => {
@@ -77,64 +92,63 @@ describe('x adapter on recorded fixtures', () => {
 
   describe('feed-quoted', () => {
     it('attaches the quoted post text as quoted context', () => {
-      const outer = articles(feedQuoted)[0]!;
-      const extraction = xAdapter.extract(outer)!;
+      const outer = needsExtraction(need(articles(feedQuoted)[0], 'quoted fixture outer post'));
 
-      expect(extraction.request.text).toBe(
+      expect(outer.request.text).toBe(
         'This experiment settles the RAG versus long-context debate for me. The retrieved pipeline stays nightly fresh, the long window slowly rots.',
       );
-      expect(extraction.request.authorHandle).toBe('@appliedml');
-      expect(extraction.request.statusId).toBe('1799836000000000000');
-      expect(extraction.request.context).toBe(
+      expect(outer.request.authorHandle).toBe('@appliedml');
+      expect(outer.request.statusId).toBe('1799836000000000000');
+      expect(outer.request.context).toBe(
         'Embedding drift quietly degrades RAG answer quality within weeks; nobody notices until users complain.',
       );
-      expect(extraction.request.contextKind).toBe('quoted');
+      expect(outer.request.contextKind).toBe('quoted');
     });
 
     it('never decorates the nested quoted article itself', () => {
       const [outer, quoted] = articles(feedQuoted);
       expect(quoted).toBeDefined();
-      expect(isOutermost(outer!, xAdapter.postSelector)).toBe(true);
-      expect(isOutermost(quoted!, xAdapter.postSelector)).toBe(false);
+      expect(isOutermost(need(outer, 'outer article'), xAdapter.postSelector)).toBe(true);
+      expect(isOutermost(need(quoted, 'quoted article'), xAdapter.postSelector)).toBe(false);
     });
 
     it('extracts the quoted article standalone without inherited context', () => {
-      const quoted = articles(feedQuoted)[1]!;
-      const extraction = xAdapter.extract(quoted)!;
+      const quoted = needsExtraction(
+        need(articles(feedQuoted)[1], 'quoted fixture inner post'),
+      );
 
-      expect(extraction.request.text).toBe(
+      expect(quoted.request.text).toBe(
         'Embedding drift quietly degrades RAG answer quality within weeks; nobody notices until users complain.',
       );
-      expect(extraction.request.authorHandle).toBe('@smallmodels');
-      expect(extraction.request.context).toBeNull();
-      expect(extraction.request.contextKind).toBeNull();
+      expect(quoted.request.authorHandle).toBe('@smallmodels');
+      expect(quoted.request.context).toBeNull();
+      expect(quoted.request.contextKind).toBeNull();
     });
   });
 
   describe('detail-thread', () => {
     it('gives replies the root post as parent context, root itself none', () => {
-      const [root, reply1, reply2] = articles(detailThread);
       const rootText =
         'Ionomics papers suggest gut bacteria produce neurotransmitters in small but measurable amounts.';
+      const [root, reply1, reply2] = articles(detailThread);
 
-      const rootExtraction = xAdapter.extract(root!)!;
+      const rootExtraction = needsExtraction(need(root, 'thread root'));
       expect(rootExtraction.request.context).toBeNull();
       expect(rootExtraction.request.contextKind).toBeNull();
 
-      const reply1Extraction = xAdapter.extract(reply1!)!;
+      const reply1Extraction = needsExtraction(need(reply1, 'thread reply 1'));
       expect(reply1Extraction.request.authorHandle).toBe('@prebiotics');
       expect(reply1Extraction.request.statusId).toBe('1799839000000000000');
       expect(reply1Extraction.request.context).toBe(rootText);
       expect(reply1Extraction.request.contextKind).toBe('parent');
 
-      const reply2Extraction = xAdapter.extract(reply2!)!;
+      const reply2Extraction = needsExtraction(need(reply2, 'thread reply 2'));
       expect(reply2Extraction.request.context).toBe(rootText);
       expect(reply2Extraction.request.contextKind).toBe('parent');
     });
 
     it('still works when the root has no permalink (detail header omitted)', () => {
-      const root = articles(detailThread)[0]!;
-      const rootExtraction = xAdapter.extract(root)!;
+      const rootExtraction = needsExtraction(need(articles(detailThread)[0], 'thread root'));
       expect(rootExtraction.request.text).toContain('Ionomics');
       expect(rootExtraction.request.sourceUrl).toBeNull();
       expect(rootExtraction.request.statusId).toBeNull();
@@ -144,7 +158,7 @@ describe('x adapter on recorded fixtures', () => {
   describe('post-no-text', () => {
     it('skips media-only posts entirely (no chip, no request)', () => {
       expect(articles(postNoText)).toHaveLength(1);
-      expect(xAdapter.extract(articles(postNoText)[0]!)).toBeNull();
+      expect(xAdapter.extract(need(articles(postNoText)[0], 'media-only post'))).toBeNull();
     });
 
     it('records the available alt text in the fixture for the later media phase', () => {
@@ -155,7 +169,7 @@ describe('x adapter on recorded fixtures', () => {
 
   describe('post-long-text', () => {
     it('truncates the oversized post at the shared size cap with an ellipsis', () => {
-      const extraction = xAdapter.extract(articles(postLongText)[0]!)!;
+      const extraction = needsExtraction(need(articles(postLongText)[0], 'oversized post'));
       const { text } = extraction.request;
 
       expect(text.length).toBeLessThanOrEqual(MAX_EXPLAIN_INPUT_CHARS);
@@ -170,8 +184,8 @@ describe('x adapter on recorded fixtures', () => {
     it('never mints parent context between timeline posts (accessible-list sections)', () => {
       const [first, second] = articles(feedSectionGuard);
 
-      expect(xAdapter.extract(first!)!.request.context).toBeNull();
-      const secondExtraction = xAdapter.extract(second!)!;
+      expect(needsExtraction(need(first, 'guard post 1')).request.context).toBeNull();
+      const secondExtraction = needsExtraction(need(second, 'guard post 2'));
       expect(secondExtraction.request.context).toBeNull();
       expect(secondExtraction.request.contextKind).toBeNull();
     });

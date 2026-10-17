@@ -8,9 +8,11 @@ import type { ExplainRequest } from '@qeri/shared';
  * manifest.ts) — never touching the engine, the panel, or the backend.
  *
  * Contract rules:
- * - `extract` must be PURE with respect to the DOM it receives: no window.location,
- *   no navigator — the adapter registry owns the host decision and the caller owns
- *   the document. This keeps the adapter testable against recorded fixtures.
+ * - `extract` must be pure with respect to the DOM it receives: no `window.location`
+ *   and no globals that reveal or select the page — the adapter registry owns the
+ *   host decision, and the caller owns the document. The single sanctioned
+ *   environment read is `navigator.language`, used only to set the output language.
+ *   This keeps the adapter testable against recorded fixtures.
  * - `extract` returns null for anything that should be skipped (no text, unsupported
  *   layout variant). Returning fewer posts is always better than returning noise.
  */

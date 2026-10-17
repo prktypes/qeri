@@ -1,8 +1,3 @@
-node_modules/
-dist/
-out/
-build/
-coverage/
-pnpm-lock.yaml
-package-lock.json
-.git/
+# Recorded DOM captures are artifacts, not source code — reformatting them changes
+# their innerText bytes and breaks extraction assertions.
+tests/fixtures/

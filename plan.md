@@ -113,7 +113,7 @@ qeri/
 | ----- | --------------------------------------- | --------------------------------------------------- | ------ |
 | 0     | Repo & tooling scaffolding              | Clean CI-ready monorepo; extension builds           | ✅     |
 | 1     | Extension foundation (MV3 + side panel) | Explain chip injects; panel shows **demo** response | ✅     |
-| 2     | X extraction engine                     | Robust post detection + fixtures + tests            | ⬜     |
+| 2     | X extraction engine                     | Robust post detection + fixtures + tests            | ✅     |
 | 3     | AI explanation engine (OpenRouter)      | Real structured explanations; quota cache           | ⬜     |
 | 4     | Accounts & saved knowledge (Supabase)   | Save + history, row-level security                  | ⬜     |
 | 5     | Reliability, privacy, security          | Rate limits, injection hardening, a11y, Sentry      | ⬜     |
@@ -123,7 +123,7 @@ qeri/
 
 ---
 
-## How to test the current version (Phase 0–1 = demo mode)
+## How to test the current version (Phase 0–2 = demo mode, with thread context)
 
 ### 1. Build & install the extension
 
@@ -150,6 +150,16 @@ In Chrome: open `chrome://extensions` → enable **Developer mode** (top right) 
 | Switch OS/browser theme                  | Panel follows light/dark automatically                                                                                                                                                                         |
 | Click ✦ while the service worker is cold | First click may take a moment; no stuck “loading” state — chip recovers to `Retry`/`Failed` briefly on error                                                                                                   |
 
+**Phase 2 additions (thread context):**
+
+| Check                                                  | Expected result                                                                                                                                                                           |
+| ------------------------------------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Open a post that **quotes another post**               | Chip only on the outer post (never on the quote box); explanation shows a **“Quotes this post”** card with the quoted text, and the demo summary gains “(this post quotes another post…)” |
+| Open a **post detail/reply page** (`/status/…` thread) | Chips on the root and replies; a reply's explanation shows a **“Replying to”** card with the thread-root post's text                                                                      |
+| Open an image-only post                                | No chip (text extraction is the Phase 2 scope; image captioning comes later)                                                                                                              |
+| Timeline posts back-to-back                            | Posts do **not** inherit each other as fake parent context (timeline section guard)                                                                                                       |
+| Run the fixture suite (`pnpm test`)                    | 29 unit tests green, incl. the 6-fixture detection benchmark (11 articles → 9 chip targets, quoted box intentionally excluded)                                                            |
+
 ### 3. Where to look when something misbehaves
 
 - **Service worker logs**: `chrome://extensions` → Qeri → _Inspect views: service worker_.
@@ -161,7 +171,7 @@ In Chrome: open `chrome://extensions` → enable **Developer mode** (top right) 
 ### 4. Quality gates (must all pass before any commit)
 
 ```bash
-pnpm test          # 12 unit tests — schemas, messaging guard, mock generator
+pnpm test          # 29 unit tests — schemas, messaging guard, mock generator, fixtures
 pnpm typecheck     # strict TS across the whole workspace
 pnpm lint          # ESLint (logic); formatting is Prettier's job
 pnpm format:check  # Prettier
@@ -169,11 +179,19 @@ pnpm build:ext     # the real gate — Vite must bundle all entry points
 pnpm zip:ext       # → apps/extension/qeri-extension.zip (store artifact, verified zip)
 ```
 
-### 5. Known limitations after Phase 0–1 (deliberate scope cuts)
+### 5. Known limitations after Phase 2 (deliberate scope cuts)
 
 - Explanation content is **demo copy** — it proves the pipeline; real AI arrives Phase 3.
 - Follow-up chips are static placeholders until the AI integration.
-- Some embedded post layouts without a reachable action bar get no chip yet.
+- Media-only posts (images without text) get **no chip** — alt-text captioning is a
+  later phase (the fixture records alt text so the slot is already testable).
+- Text-bearing posts that sit in unsupported layout shells (e.g. some embeds) still
+  get no chip; adding a shape = one fixture + one adapter branch.
+- Parent-context detection is a **best-effort heuristic** (see the Phase 2 concepts
+  section): it assumes detail conversations wrap in `section[aria-labelledby]` and
+  the home timeline heading is the `accessible-list` pattern — validated by the guard
+  fixture, but revisit when live captures drift. Context is always visibly labeled,
+  so a wrong label is noticeable, never silent data corruption.
 - No persistence, accounts, or network calls yet — by design (privacy-first default).
 
 ### Troubleshooting: “nothing happens when I click Explain”
@@ -358,6 +376,144 @@ to shared code during development.
 
 ---
 
+## Phase 2 — what was built and why (concepts, in implementation order)
+
+### Fixture-driven testing (the core Phase 2 idea)
+
+X's DOM is the single most fragile dependency of the whole product: posts render,
+virtualize, and mutate at scroll speed, and selectors that work today erode silently.
+Instead of testing selectors against a live site (impossible from CI, flaky, and slow),
+we **record representative DOM shapes once** as standalone HTML files — fixtures — and
+run the extraction engine against them on every commit.
+
+What a fixture is here: a plain HTML document in `tests/fixtures/` that reproduces one
+shape of X's DOM with exactly the structural attributes our selectors key on —
+`article[data-testid="tweet"]`, `div[data-testid="tweetText"]`,
+`div[data-testid="User-Name"]`, permalink `<a href="…/status/…">` anchors, the
+conversation/timeline `section` wrappers — plus realistic obfuscated `css-*` class noise
+to prove we never depend on class names (they change with every deploy).
+
+Why six fixtures and not twenty: each fixture encodes one _decision_ the engine makes:
+
+| Fixture                   | Decision encoded                                                    |
+| ------------------------- | ------------------------------------------------------------------- |
+| `feed-basic.html`         | Ordinary posts extract fully; empty context                         |
+| `feed-quoted.html`        | Quoted post → text attaches as context, quote box never gets a chip |
+| `detail-thread.html`      | Replies inherit the thread root as parent context; the root doesn't |
+| `post-no-text.html`       | Media-only posts are skipped (return null → no chip)                |
+| `post-long-text.html`     | 4,000-char cap with a word-boundary ellipsis tail                   |
+| `feed-section-guard.html` | Timeline sections must never mint parent context (see guard below)  |
+
+New shapes discovered in the wild = new fixture + new test — that is the whole upgrade
+path. `tests/fixtures/README.md` includes a DevTools `copy(article.outerHTML)` capture
+checklist for turning a live X page into a new fixture in two minutes.
+
+### happy-dom (a real DOM in unit tests)
+
+Extraction needs an actual DOM — `querySelector`, `closest`, and crucially `innerText`
+(which collapses layouts like a browser, unlike `textContent`). We added **happy-dom**
+as a dev dependency: a fast DOM implementation that vitest can boot per-file via the
+`/** @vitest-environment happy-dom */` docblock. Other suites stay in plain node, so
+schema/messaging tests don't pay a DOM cost.
+
+### The SiteAdapter contract (a second site = a new file)
+
+Phase 1 had X logic smeared across modules (extractor reading `window.location`, the
+observer importing X selectors). Phase 2 formalizes the seam. One interface
+(`apps/extension/src/content/adapters/types.ts`):
+
+```ts
+interface SiteAdapter {
+  id: string; // "x" — for logs + future fixture naming
+  isOwner(hostname: string): bool; // exact host list; substrings never match
+  postSelector: string; // where posts start ("article[data-testid=tweet]")
+  extract(article: HTMLElement): SiteExtraction | null;
+}
+```
+
+`SiteExtraction` = `{ element, request }` — the DOM node (for chip placement) plus the
+validated schema-shaped payload. Two rules make the contract strong:
+
+1. **`extract` never reads `window.location`** — the _registry_ decides who owns the
+   current host (one dispatch table, `adapters/registry.ts`), the content-script entry
+   resolves it once at boot, and everything else is pure DOM-in → payload-out. This is
+   exactly what makes fixture testing possible: tests hand the adapter an element from
+   a recorded file, no live URL involved. (The one sanctioned environment read is
+   `navigator.language`, for the output language field.)
+2. **`null` means skip** — the adapter is allowed and encouraged to say "not this one"
+   (empty text, unsupported shell). Returning _fewer_ posts is always better than
+   returning noise: an unexplained post is invisible; a wrong explanation erodes trust.
+
+Supporting site #2 later = implement `SiteAdapter` in one file (new tests included),
+register it in the registry's one-entry array, add content-script match patterns to
+`manifest.ts`. Nothing else in the codebase may change — that is the goal this
+architecture buys.
+
+### Outermost-only decoration (the quote-box rule)
+
+A quoted post renders as an article **nested inside** the quoting article. Two
+different jobs emerged:
+
+- The **observer** (`detection/observe-feed.ts`) owns chip-attachment policy: it found
+  the nested rule ("decorate only articles whose ancestors contain no other article")
+  and extracted it into the pure, tested helper `isOutermost(article, postSelector)`.
+- The **adapter** does pure extraction: you _can_ ask it to extract the quoted article
+  directly and it will happily produce a valid request (future "explain just the quote"
+  feature) — extraction and decoration are now independent concerns.
+
+The observer was also rewired to the contract: it selects via `adapter.postSelector`
+and asks `adapter.extract` instead of importing X constants. It is now
+site-generic.
+
+### Thread context: quoted wins, parent follows
+
+The roadmap's "thread context" deliverable became two additive fields on
+`ExplainRequest`: `context` (string, ≤ 2,000 chars) and `contextKind`
+(`quoted | parent | thread`). Extraction priority:
+
+1. **Quoted context** — if the article contains a nested article, the quote's text
+   becomes context, kind `quoted` ("this post quotes another post").
+2. **Parent context** — otherwise, if the article sits inside a conversation
+   `section[aria-labelledby]` and is not the first article in it, the first article's
+   text becomes context, kind `parent` ("this is a reply in this thread").
+
+**The timeline guard — the most important correctness decision in Phase 2.** The home
+timeline is _also_ wrapped in a `section[aria-labelledby]` (its a11y heading is the
+long-standing `accessible-list-N` id). A naive "first article in section = parent"
+heuristic would therefore label random timeline posts as "replies" to unrelated posts
+above them. The adapter explicitly excludes sections whose `aria-labelledby` target id
+starts with `accessible-list`, and `feed-section-guard.html` locks that behavior as a
+test. This is an assumption encoded from known X a11y patterns, not a captured DOM
+guarantee — the fixture README's live-capture checklist is how we re-validate it when
+X evolves. Because context is always _visibly labeled_ in the UI, the worst case of a
+drifted assumption is a noticeable mislabeled card, never silent data corruption.
+
+### Whitespace-aware truncation
+
+Two caps, one behavior (`truncate` in the adapter, shared constants elsewhere):
+post text ≤ `MAX_EXPLAIN_INPUT_CHARS` (4,000) and context ≤ `MAX_CONTEXT_CHARS`
+(2,000). The cut lands at the cap minus the ellipsis, then backs up to the last word
+boundary — but only when that keeps ≥ 60 % of the cap (a pathological first-word
+length would otherwise shrink text absurdly). Never mid-word, never mid-glyph.
+
+### The benchmark test
+
+The benchmark suite computes, across all six fixtures: 11 articles parsed
+→ exactly 9 chip targets (the quoted box is decoration-exempt), plus per-fixture
+expectations for every extracted field. "≥95 % detection" from the roadmap becomes
+concrete: the benchmark fails on any regression in detection, extraction correctness,
+or skip policy in one shot.
+
+### Demo mode now narrates context
+
+The `MockExplainer` stays honor-bound (it describes the post's _shape_, never
+fabricates subject claims), and now appends honesty notes like "(this post quotes
+another post, shown below)". The panel renders a labeled card — **"Quotes this post"**
+or **"Replying to"** — between the source preview and the analysis, so Phase 2's data
+is actually _visible_ to the user before any AI exists.
+
+---
+
 ## Data contracts (v1)
 
 ### `ExplainRequest` — content script → service worker → (Phase 3) API
@@ -368,6 +524,10 @@ to shared code during development.
   "authorHandle": "@jane_doe",
   "sourceUrl": "https://x.com/jane_doe/status/123",
   "statusId": "123",
+  // Phase 2: surrounding thread text + its kind (quoted | parent | thread).
+  // context is advisory conversation framing, capped at 2,000 chars.
+  "context": "Startups don't fail from rates; they fail from lazy assumptions.",
+  "contextKind": "quoted",
   "mode": "simple", // quick | simple | deep
   "language": "en",
 }
@@ -431,23 +591,23 @@ to shared code during development.
 
 ## Risks while building and how we handle them
 
-| Risk                                  | Mitigation                                                                               |
-| ------------------------------------- | ---------------------------------------------------------------------------------------- |
-| X changes its DOM selectors           | Selectors isolated in `adapters/x.ts`; Phase 2 adds a recorded-fixture suite             |
-| Build tooling drift (CRXJS/Vite)      | Pinned Vite 7 + CRXJS 3 combo; lesson recorded above                                     |
-| Secret leakage                        | `.gitignore` blocks `.env*`; keys will live server-side only (Phase 3)                   |
-| Duplicate chip injection on re-scroll | WeakSet dedupe + idempotent decorate + batch-per-frame observer                          |
-| Stuck loading states                  | Validated ack contract; chip auto-recovers to Retry/Failed and panel has an error branch |
+| Risk                                  | Mitigation                                                                                                                                 |
+| ------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------ |
+| X changes its DOM selectors           | Selectors isolated in `adapters/x.ts`; 6-fixture suite now hard-codes the assumptions — a selector break fails tests, not users            |
+| Parent-context misinterpretation      | Timeline sections (`accessible-list` heading) are excluded by a guard fixture; context is always labeled in the UI so mistakes are visible |
+| Build tooling drift (CRXJS/Vite)      | Pinned Vite 7 + CRXJS 3 combo; lesson recorded above                                                                                       |
+| Secret leakage                        | `.gitignore` blocks `.env*`; keys will live server-side only (Phase 3)                                                                     |
+| Duplicate chip injection on re-scroll | WeakSet dedupe + idempotent decorate + batch-per-frame observer                                                                            |
+| Stuck loading states                  | Validated ack contract; chip auto-recovers to Retry/Failed and panel has an error branch                                                   |
 
 ## Next up
 
-- **Phase 2 — X extraction engine**: record 10–20 real post HTML fixtures into
-  `tests/fixtures/`; extractor unit tests against them (≥95% detection on the set);
-  thread context (parent posts), quoted-post references, alt-text handling; adapter
-  interface formalized so a second site is “new file + new manifest match”.
 - **Phase 3 — AI engine**: Supabase Edge Function `/explain` (validate → auth → quota →
   cache by content hash + prompt/model version → OpenRouter structured output →
-  re-validate server-side), quality set of 50–100 posts, cost/usage tracking.
+  re-validate server-side), quality set of 50–100 posts, cost/usage tracking. The
+  Phase 2 adapter output feeds this directly: `text` + `context`/`contextKind` give
+  the model the conversation framing it needs for accurate explanations.
+- Later phases as per roadmap (accounts/saves, hardening, beta, store, growth).
 
 ## Session log (append-only)
 
@@ -471,3 +631,15 @@ to shared code during development.
   gained a 12s ack timeout (can never stick on loading); structured `[qeri:sw]` /
   `[qeri:cs]` / `[qeri:panel]` console logging shipped for field diagnosis.
   Troubleshooting guide added to this document.
+- **2026-10-17 — Phase 2 complete: X extraction engine.** Formal `SiteAdapter` contract
+  - registry (adding a site = new file + registry line + manifest matches); the X
+    adapter is now pure DOM-in/payload-out (fixture-testable), the observer is
+    site-generic (adapter.postSelector/extract) with an outermost-only decoration policy
+    (pure `isOutermost` helper); thread context shipped (`context` ≤ 2,000 chars +
+    `contextKind` quoted/parent/thread) with the quoted-over-parent priority and the
+    `accessible-list` timeline guard; word-boundary truncation at 4,000/2,000-char caps;
+    six structural fixtures + benchmark (11 articles → 9 intended chips) and registry
+    dispatch tests; panel renders labeled “Quotes this post” / “Replying to” cards and
+    demo mode narrates context shape. New dev tooling: happy-dom for DOM-level tests.
+    All gates green: tests 29/29 ✅ typecheck ✅ lint ✅ build ✅. Fixture drift protocol +
+    live-capture checklist recorded in `tests/fixtures/README.md`.

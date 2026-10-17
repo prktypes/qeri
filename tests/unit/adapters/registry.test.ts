@@ -1,5 +1,8 @@
 import { describe, expect, it } from 'vitest';
-import { isSupportedSite, resolveAdapter } from '../../../apps/extension/src/content/adapters/registry';
+import {
+  isSupportedSite,
+  resolveAdapter,
+} from '../../../apps/extension/src/content/adapters/registry';
 
 /**
  * The registry is the ONE dispatch table: content scripts resolve ownership here and
