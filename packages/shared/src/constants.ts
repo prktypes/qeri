@@ -5,7 +5,6 @@
 
 /** Explanation fidelity presets. "simple" is the product default (see plan.md §modes). */
 export const EXPLAIN_MODES = ['quick', 'simple', 'deep'] as const;
-export type ExplainMode = (typeof EXPLAIN_MODES)[number];
 
 /** Default UI language (BCP-47 lowercase base tag). */
 export const DEFAULT_EXPLAIN_LANGUAGE = 'en';

@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
-import { ExplainRequestSchema, ExplanationSchema } from '../explain';
+import { ExplainRequestSchema, ExplanationSchema } from './explain';
 import { createMockExplanation } from '../mocks/mock-explanation';
-import { DEMO_LATENCY_MS } from '../../constants';
+import { MAX_EXPLAIN_INPUT_CHARS } from '../constants';
 
 describe('ExplainRequestSchema', () => {
   it('fills defaults for mode and language', () => {
@@ -24,7 +24,7 @@ describe('ExplainRequestSchema', () => {
   });
 
   it('enforces the input size cap', () => {
-    const tooLong = 'a'.repeat(DEMO_LATENCY_MS > 0 ? 4001 : 1);
+    const tooLong = 'a'.repeat(MAX_EXPLAIN_INPUT_CHARS + 1);
     expect(ExplainRequestSchema.safeParse({ text: tooLong }).success).toBe(false);
   });
 

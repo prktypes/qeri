@@ -1,9 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import {
-  ExplainAckSchema,
-  ExplainRequestSchema,
-  isExplainRequestMessage,
-} from '../messages';
+import { ExplainAckSchema, isExplainRequestMessage } from './messages';
+import { ExplainRequestSchema } from '../schemas/explain';
 
 const REQUEST = { text: 'hello', authorHandle: '@a', mode: 'quick' };
 
@@ -26,9 +23,7 @@ describe('messaging envelope', () => {
   });
 
   it('workers re-validate payloads defensively (deep invalid payload fails guard)', () => {
-    expect(isExplainRequestMessage({ type: 'qeri/explain-request', payload: {} })).toBe(
-      false,
-    );
+    expect(isExplainRequestMessage({ type: 'qeri/explain-request', payload: {} })).toBe(false);
     const parsed = ExplainRequestSchema.safeParse(REQUEST);
     expect(parsed.success).toBe(true);
   });
