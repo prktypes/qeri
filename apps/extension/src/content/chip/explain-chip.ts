@@ -96,6 +96,8 @@ async function runExplainClick(args: {
   const { button, request } = args;
   const label = button.querySelector(`.${LABEL_CLASS}`);
 
+  console.debug('[qeri:cs]', 'explain clicked for post', request.statusId ?? '(no id)');
+
   const setState = (state: 'idle' | 'loading' | 'error'): void => {
     button.dataset.state = state;
   };
