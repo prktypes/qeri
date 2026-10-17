@@ -53,4 +53,15 @@ export default tseslint.config(
       '@typescript-eslint/no-non-null-assertion': 'error',
     },
   },
+  {
+    // Standalone Node tooling scripts (packaging, codegen) run as ESM on Node.
+    files: ['**/*.mjs', '**/*.cjs'],
+    languageOptions: {
+      ecmaVersion: 2024,
+      sourceType: 'module',
+      globals: {
+        ...globals.node,
+      },
+    },
+  },
 );

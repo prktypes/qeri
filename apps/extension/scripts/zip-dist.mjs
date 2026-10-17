@@ -33,7 +33,9 @@ let offset = 0;
 
 const now = new Date();
 const dosTime =
-  ((now.getHours() & 0x1f) << 11) | ((now.getMinutes() & 0x3f) << 5) | ((now.getSeconds() / 2) & 0x1f);
+  ((now.getHours() & 0x1f) << 11) |
+  ((now.getMinutes() & 0x3f) << 5) |
+  ((now.getSeconds() / 2) & 0x1f);
 const dosDate =
   (((now.getFullYear() - 1980) & 0x7f) << 9) | ((now.getMonth() + 1) << 5) | now.getDate();
 
@@ -79,7 +81,6 @@ for (const file of files) {
 
 const centralOffset = offset;
 const centralBuf = Buffer.concat(central);
-offset += centralBuf.length;
 
 const eocd = Buffer.alloc(22);
 eocd.writeUInt32LE(0x06054b50, 0);
