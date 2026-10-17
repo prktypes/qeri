@@ -1,0 +1,86 @@
+<!doctype html>
+<html lang="en">
+<head><meta charset="utf-8"><title>qeri fixture — detail thread (root post + two replies)</title></head>
+<body>
+<div id="react-root">
+  <main>
+    <div data-testid="primaryColumn">
+      <!-- Status detail page shape: one conversation section holding root + replies -->
+      <section aria-labelledby="id__conversation-heading">
+        <div data-testid="cellInnerDiv">
+          <div class="css-175oi2r r-cnw61z">
+            <!-- Root post of the conversation -->
+            <article tabindex="-1" data-testid="tweet" class="css-1dbjc4n r-1loqt21 r-18u37iz r-1ny4l3l">
+              <div data-testid="User-Name" class="css-175oi2r r-1awozwy r-6koalj r-1wbh5a2-d r-1d09ksm">
+                <a href="/microbiomegal" role="link" class="css-4rbku5 css-18t94o4 css-1rynq56 r-1loqt21 r-1wbh5a2-d">
+                  <span class="css-1jxf68 r-dnmrzs">Microbiome Notes</span>
+                  <span class="css-1jxf68 r-dnmrzs r-zchxjv">@microbiomegal</span>
+                </a>
+                <span role="presentation" class="css-1rynq56 r-bcqeeo r-qvutc0">·</span>
+              </div>
+              <div dir="auto" lang="en" data-testid="tweetText" class="css-146c3p1 r-bcqeeo r-1ttztb7 r-qvutc0">
+                <span class="css-1jxf68 r-bcqeeo">Ionomics papers suggest gut bacteria produce neurotransmitters in small but measurable amounts.</span>
+              </div>
+              <div role="group" id="id__actions-root" class="css-175oi2r r-1kbdv8c">
+                <button aria-label="Reply" role="button" data-testid="reply" class="css-175oi2r"></button>
+                <button aria-label="Like" role="button" data-testid="like" class="css-175oi2r"></button>
+              </div>
+            </article>
+          </div>
+        </div>
+
+        <div data-testid="cellInnerDiv">
+          <div class="css-175oi2r r-cnw61z">
+            <!-- Reply 1: should inherit the root's text as parent context -->
+            <article tabindex="-1" data-testid="tweet" class="css-1dbjc4n r-1loqt21 r-18u37iz r-1ny4l3l">
+              <div data-testid="User-Name" class="css-175oi2r r-1awozwy r-6koalj r-1wbh5a2-d r-1d09ksm">
+                <a href="/prebiotics" role="link" class="css-4rbku5 css-18t94o4 css-1rynq56 r-1loqt21 r-1wbh5a2-d">
+                  <span class="css-1jxf68 r-dnmrzs">Prebiotics Fan</span>
+                  <span class="css-1jxf68 r-dnmrzs r-zchxjv">@prebiotics</span>
+                </a>
+                <span role="presentation" class="css-1rynq56 r-bcqeeo r-qvutc0">·</span>
+                <a href="/prebiotics/status/1799839000000000000" dir="ltr" role="link" aria-label="12:40 PM · Sep 30, 2025" class="css-4rbku5 css-1rynq56 r-1loqt21">
+                  <time datetime="2025-09-30T12:40:00.000Z" class="css-1rynq56 r-bcqeeo">2h</time>
+                </a>
+              </div>
+              <div dir="auto" lang="en" data-testid="tweetText" class="css-146c3p1 r-bcqeeo r-1ttztb7 r-qvutc0">
+                <span class="css-1jxf68 r-bcqeeo">So the gut-brain axis is real? How did they disentangle vagus signaling from blood transport?</span>
+              </div>
+              <div role="group" id="id__actions-r1" class="css-175oi2r r-1kbdv8c">
+                <button aria-label="Reply" role="button" data-testid="reply" class="css-175oi2r"></button>
+                <button aria-label="Like" role="button" data-testid="like" class="css-175oi2r"></button>
+              </div>
+            </article>
+          </div>
+        </div>
+
+        <div data-testid="cellInnerDiv">
+          <div class="css-175oi2r r-cnw61z">
+            <!-- Reply 2: same parent context expectation -->
+            <article tabindex="-1" data-testid="tweet" class="css-1dbjc4n r-1loqt21 r-18u37iz r-1ny4l3l">
+              <div data-testid="User-Name" class="css-175oi2r r-1awozwy r-6koalj r-1wbh5a2-d r-1d09ksm">
+                <a href="/statmed" role="link" class="css-4rbku5 css-18t94o4 css-1rynq56 r-1loqt21 r-1wbh5a2-d">
+                  <span class="css-1jxf68 r-dnmrzs">Stats or Medicine</span>
+                  <span class="css-1jxf68 r-dnmrzs r-zchxjv">@statmed</span>
+                </a>
+                <span role="presentation" class="css-1rynq56 r-bcqeeo r-qvutc0">·</span>
+                <a href="/statmed/status/1799839500000000000" dir="ltr" role="link" aria-label="1:05 PM · Sep 30, 2025" class="css-4rbku5 css-1rynq56 r-1loqt21">
+                  <time datetime="2025-09-30T13:05:00.000Z" class="css-1rynq56 r-bcqeeo">1h</time>
+                </a>
+              </div>
+              <div dir="auto" lang="en" data-testid="tweetText" class="css-146c3p1 r-bcqeeo r-1ttztb7 r-qvutc0">
+                <span class="css-1jxf68 r-bcqeeo">How do they keep samples uncontaminated? Listing the controls would help.</span>
+              </div>
+              <div role="group" id="id__actions-r2" class="css-175oi2r r-1kbdv8c">
+                <button aria-label="Reply" role="button" data-testid="reply" class="css-175oi2r"></button>
+                <button aria-label="Like" role="button" data-testid="like" class="css-175oi2r"></button>
+              </div>
+            </article>
+          </div>
+        </div>
+      </section>
+    </div>
+  </main>
+</div>
+</body>
+</html>

@@ -1,0 +1,54 @@
+<!doctype html>
+<html lang="en">
+<head><meta charset="utf-8"><title>qeri fixture — timeline section regression guard</title></head>
+<body>
+<div id="react-root">
+  <main>
+    <div data-testid="primaryColumn">
+      <!--
+        The home timeline has ALSO been observed wrapped in a section[aria-labelledby]
+        whose heading id starts with "accessible-list". That is anti-evidence for the
+        reply-parent heuristic: posts here must NEVER inherit each other as context.
+      -->
+      <section aria-labelledby="accessible-list-0" role="region" aria-label="Timeline: Your Home Timeline">
+        <h1 id="accessible-list-0" class="visuallyhidden">Timeline</h1>
+        <div data-testid="cellInnerDiv">
+          <article tabindex="-1" data-testid="tweet" class="css-1dbjc4n r-1loqt21 r-18u37iz">
+            <div data-testid="User-Name" class="css-175oi2r r-1awozwy r-1wbh5a2-d r-1d09ksm">
+              <a href="/firstposter" role="link" class="css-4rbku5 css-1rynq56 r-1loqt21">
+                <span class="css-1jxf68">First Poster</span>
+                <span class="css-1jxf68 r-zchxjv">@firstposter</span>
+              </a>
+              <span role="presentation" class="css-1rynq56">·</span>
+              <a href="/firstposter/status/1799840000000000000" dir="ltr" role="link" class="css-4rbku5 css-1rynq56 r-1loqt21">
+                <time datetime="2025-09-30T14:00:00.000Z" class="css-1rynq56">20h</time>
+              </a>
+            </div>
+            <div dir="auto" lang="en" data-testid="tweetText" class="css-146c3p1 r-bcqeeo r-qvutc0">
+              <span class="css-1jxf68">First synthetic timeline post — later posts in this timeline must not treat it as a parent.</span>
+            </div>
+          </article>
+        </div>
+        <div data-testid="cellInnerDiv">
+          <article tabindex="-1" data-testid="tweet" class="css-1dbjc4n r-1loqt21 r-18u37iz">
+            <div data-testid="User-Name" class="css-175oi2r r-1awozwy r-1wbh5a2-d r-1d09ksm">
+              <a href="/secondposter" role="link" class="css-4rbku5 css-1rynq56 r-1loqt21">
+                <span class="css-1jxf68">Second Poster</span>
+                <span class="css-1jxf68 r-zchxjv">@secondposter</span>
+              </a>
+              <span role="presentation" class="css-1rynq56">·</span>
+              <a href="/secondposter/status/1799840500000000000" dir="ltr" role="link" class="css-4rbku5 css-1rynq56 r-1loqt21">
+                <time datetime="2025-09-30T15:00:00.000Z" class="css-1rynq56">19h</time>
+              </a>
+            </div>
+            <div dir="auto" lang="en" data-testid="tweetText" class="css-146c3p1 r-bcqeeo r-qvutc0">
+              <span class="css-1jxf68">Second synthetic timeline post — context must stay empty even though an article precedes it.</span>
+            </div>
+          </article>
+        </div>
+      </section>
+    </div>
+  </main>
+</div>
+</body>
+</html>

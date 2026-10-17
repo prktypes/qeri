@@ -1,0 +1,64 @@
+<!doctype html>
+<html lang="en">
+<head><meta charset="utf-8"><title>qeri fixture — feed quoted (post quoting another post)</title></head>
+<body>
+<div id="react-root">
+  <main>
+    <div data-testid="primaryColumn">
+      <section aria-labelledby="accessible-list-0" role="region" aria-label="Timeline: Home">
+        <div data-testid="scrollSnapList">
+          <div data-testid="cellInnerDiv">
+            <div class="css-175oi2r r-cnw61z">
+              <!-- Outer post: quotes a smaller embedded post (nested article) -->
+              <article tabindex="-1" data-testid="tweet" class="css-1dbjc4n r-1loqt21 r-18u37iz r-1ny4l3l">
+                <div class="css-175oi2r r-1wbh5a2-d">
+                  <div data-testid="User-Name" class="css-175oi2r r-1awozwy r-6koalj r-1wbh5a2-d r-1d09ksm">
+                    <a href="/appliedml" role="link" class="css-4rbku5 css-18t94o4 css-1rynq56 r-1loqt21 r-1wbh5a2-d">
+                      <span class="css-1jxf68 r-dnmrzs">Applied ML Notes</span>
+                      <span class="css-1jxf68 r-dnmrzs r-zchxjv">@appliedml</span>
+                    </a>
+                    <span role="presentation" class="css-1rynq56 r-bcqeeo r-qvutc0">·</span>
+                    <a href="/appliedml/status/1799836000000000000" dir="ltr" role="link" aria-label="11:20 AM · Sep 30, 2025" class="css-4rbku5 css-1rynq56 r-1loqt21">
+                      <time datetime="2025-09-30T11:20:00.000Z" class="css-1rynq56 r-bcqeeo">4h</time>
+                    </a>
+                  </div>
+                </div>
+                <div dir="auto" lang="en" data-testid="tweetText" class="css-146c3p1 r-bcqeeo r-1ttztb7 r-qvutc0">
+                  <span class="css-1jxf68 r-bcqeeo">This experiment settles the RAG versus long-context debate for me. The retrieved pipeline stays nightly fresh, the long window slowly rots.</span>
+                </div>
+
+                <!-- Quoted post block: boxed, nested article rendered under the text -->
+                <div class="css-175oi2r r-kemksi r-1kqtdi0 r-1867qdf r-1phboty r-rs99b7 r-1s2bzr4 r-1ymu9kr r-13qz1uu" id="id__quoted-box">
+                  <article tabindex="-1" data-testid="tweet" class="css-1dbjc4n r-1loqt21 r-1ny4l3l r-1udh08x">
+                    <div class="css-175oi2r r-1wbh5a2-d">
+                      <div data-testid="User-Name" class="css-175oi2r r-1awozwy r-6koalj r-1wbh5a2-d r-1d09ksm">
+                        <a href="/smallmodels" role="link" class="css-4rbku5 css-18t94o4 css-1rynq56 r-1loqt21 r-1wbh5a2-d">
+                          <span class="css-1jxf68 r-dnmrzs">SmallModels Weekly</span>
+                          <span class="css-1jxf68 r-dnmrzs r-zchxjv">@smallmodels</span>
+                        </a>
+                        <span role="presentation" class="css-1rynq56 r-bcqeeo r-qvutc0">·</span>
+                        <a href="/smallmodels/status/1799800000000000000" dir="ltr" role="link" aria-label="8:05 AM · Sep 28, 2025" class="css-4rbku5 css-1rynq56 r-1loqt21">
+                          <time datetime="2025-09-28T08:05:00.000Z" class="css-1rynq56 r-bcqeeo">Sep 28</time>
+                        </a>
+                      </div>
+                    </div>
+                    <div dir="auto" lang="en" data-testid="tweetText" class="css-146c3p1 r-bcqeeo r-1ttztb7 r-qvutc0">
+                      <span class="css-1jxf68 r-bcqeeo">Embedding drift quietly degrades RAG answer quality within weeks; nobody notices until users complain.</span>
+                    </div>
+                  </article>
+                </div>
+                <div role="group" id="id__actions-c" class="css-175oi2r r-1kbdv8c">
+                  <button aria-label="Reply" role="button" data-testid="reply" class="css-175oi2r"></button>
+                  <button aria-label="Repost" role="button" data-testid="retweet" class="css-175oi2r"></button>
+                  <button aria-label="Like" role="button" data-testid="like" class="css-175oi2r"></button>
+                </div>
+              </article>
+            </div>
+          </div>
+        </div>
+      </section>
+    </div>
+  </main>
+</div>
+</body>
+</html>

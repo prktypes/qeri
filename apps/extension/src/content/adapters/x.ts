@@ -96,10 +96,14 @@ function extractQuotedContext(article: HTMLElement): ThreadContext | null {
  * On status detail pages the conversation lives inside one `section`; the FIRST
  * article there is the thread root, and every later article is a reply to (some
  * ancestor in) it. Parent context = the root's text, labeled "parent".
+ *
+ * Guard: the home timeline is ALSO a section, whose a11y heading id has started
+ * with "accessible-list" for years — sections pointing at one are timelines, so
+ * posts there never inherit each other (fixture: feed-section-guard.html).
  */
 function extractParentContext(article: HTMLElement): ThreadContext | null {
   const section = article.closest<HTMLElement>(X_SELECTORS.conversationSection);
-  if (!section) return null;
+  if (!section || isTimelineSection(section)) return null;
 
   const articles = Array.from(section.querySelectorAll<HTMLElement>(X_SELECTORS.article));
   const root = articles[0];
@@ -107,6 +111,16 @@ function extractParentContext(article: HTMLElement): ThreadContext | null {
 
   const text = extractText(root);
   return text ? makeContext(text, 'parent') : null;
+}
+
+/** True when the section's aria-labelledby target id is the timeline a11y heading. */
+function isTimelineSection(section: HTMLElement): boolean {
+  const labelledBy = section.getAttribute('aria-labelledby');
+  if (!labelledBy) return false;
+  // X names the timeline a11y heading "accessible-list-*"; detail conversations
+  // use per-conversation ids instead. Resolve only what the attribute states.
+  const primary = labelledBy.trim().split(/\s+/)[0] ?? '';
+  return primary.startsWith('accessible-list');
 }
 
 interface ThreadContext {
