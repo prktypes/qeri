@@ -52,7 +52,8 @@ export const ExplainRequestSchema = z.object({
 });
 export type ExplainRequest = z.infer<typeof ExplainRequestSchema>;
 
-/** One glossary entry rendered as a term/definition pair. */
+/**
+ * One glossary entry rendered as a term/definition pair. */
 export const KeyTermSchema = z.object({
   term: z.string().min(1).max(80),
   definition: z.string().min(1).max(400),
@@ -60,28 +61,42 @@ export const KeyTermSchema = z.object({
 export type KeyTerm = z.infer<typeof KeyTermSchema>;
 
 /**
- * The full explanation payload the side panel renders — identical shape for demo mode
- * (Phase 1) and the real model (Phase 3+). The renderer must never branch on the
- * generator, only the meta block may differ.
+ * The six content blocks the MODEL is responsible for (plan.md §Phase 3). This is
+ * exactly what the OpenRouter prompt requests — and what `/explain` re-validates
+ * server-side before composing the full payload. Identity/meta are added below by
+ * the server, never asked of the model.
  */
-export const ExplanationSchema = z.object({
-  id: z.string().min(1),
-  createdAt: z.iso.datetime(),
-  request: ExplainRequestSchema,
+export const ExplanationContentSchema = z.object({
   summary: z.string().min(1).max(600),
   whyItMatters: z.string().min(1).max(800),
   keyTerms: z.array(KeyTermSchema).max(8),
   example: z.string().min(1).max(800),
   caveats: z.array(z.string().min(1).max(300)).max(6),
   followUps: z.array(z.string().min(1).max(160)).max(6),
-  meta: z.object({
-    /** Who produced this explanation. 'openrouter' arrives in Phase 3. */
-    generator: z.enum(['mock', 'openrouter']),
-    model: z.string().nullish(),
-    cached: z.boolean(),
-    generationMs: z.number().int().nonnegative(),
-    schemaVersion: z.string(),
-  }),
+});
+export type ExplanationContent = z.infer<typeof ExplanationContentSchema>;
+
+/** Provenance block: who/what produced the explanation and at what cost/time. */
+export const ExplanationMetaSchema = z.object({
+  /** Who produced this explanation. */
+  generator: z.enum(['mock', 'openrouter']),
+  model: z.string().nullish(),
+  cached: z.boolean(),
+  generationMs: z.number().int().nonnegative(),
+  schemaVersion: z.string(),
+});
+export type ExplanationMeta = z.infer<typeof ExplanationMetaSchema>;
+
+/**
+ * The full explanation payload the side panel renders — identical shape for demo mode
+ * and the live model. The renderer must never branch on the generator, only the meta
+ * block may differ; server-side re-validation guards the shape end to end.
+ */
+export const ExplanationSchema = ExplanationContentSchema.extend({
+  id: z.string().min(1),
+  createdAt: z.iso.datetime(),
+  request: ExplainRequestSchema,
+  meta: ExplanationMetaSchema,
 });
 export type Explanation = z.infer<typeof ExplanationSchema>;
 

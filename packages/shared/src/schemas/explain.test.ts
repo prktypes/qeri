@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { ExplainRequestSchema, ExplanationSchema } from './explain';
+import { ExplainRequestSchema, ExplanationContentSchema, ExplanationSchema } from './explain';
 import { createMockExplanation } from '../mocks/mock-explanation';
 import { MAX_CONTEXT_CHARS, MAX_EXPLAIN_INPUT_CHARS } from '../constants';
 
@@ -58,6 +58,42 @@ describe('ExplainRequestSchema', () => {
       contextKind: 'unrelated',
     });
     expect(badKind.success).toBe(false);
+  });
+
+  describe('ExplanationContent (model-owned blocks only)', () => {
+    const validContent = {
+      summary: 'One-sentence takeaway.',
+      whyItMatters: 'Why the takeaway matters.',
+      keyTerms: [{ term: 'Vector DB', definition: 'A store of embeddings.' }],
+      example: 'A toy example.',
+      caveats: ['Demo honesty note.'],
+      followUps: ['What next?'],
+    };
+
+    it('validates the model-shaped content independently of identity/meta', () => {
+      const ok = ExplanationContentSchema.safeParse(validContent);
+      expect(ok.success).toBe(true);
+
+      const viaFullSchema = ExplanationSchema.safeParse({
+        ...validContent,
+        id: 'test-1',
+        createdAt: new Date().toISOString(),
+        request: { text: 'x' },
+        meta: { generator: 'mock', cached: false, generationMs: 1, schemaVersion: '0.1.0' },
+      });
+      expect(viaFullSchema.success).toBe(true);
+    });
+
+    it('rejects terms beyond the cap and missing blocks', () => {
+      const tooManyTerms = ExplanationContentSchema.safeParse({
+        ...validContent,
+        keyTerms: Array.from({ length: 9 }, (_, i) => ({ term: `t${i}`, definition: 'd' })),
+      });
+      expect(tooManyTerms.success).toBe(false);
+
+      const noSummary = ExplanationContentSchema.safeParse({ ...validContent, summary: '' });
+      expect(noSummary.success).toBe(false);
+    });
   });
 });
 
