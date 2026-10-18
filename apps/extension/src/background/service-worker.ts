@@ -10,6 +10,7 @@ import {
   type Explanation,
   type PanelState,
 } from '@qeri/shared';
+import { fetchLiveExplanation } from './explain-client';
 
 /**
  * Service worker orchestration (plan.md §Phase 1).
@@ -38,8 +39,25 @@ async function publishPanelState(state: PanelState): Promise<void> {
 
 const sleep = (ms: number): Promise<void> => new Promise((resolve) => setTimeout(resolve, ms));
 
-/** Demo "generation": deterministic mock + artificial latency to exercise loading UI. */
+/**
+ * Explanation orchestrator (plan.md §Phase 3).
+ *
+ * Live-first: the Qeri API (local Phase 3 proxy for the Phase 4 Edge Function) gets
+ * the validated request; any failure falls back to the deterministic demo generator,
+ * so the product degrades gracefully — the panel NEVER lacks an explanation, and the
+ * meta badge tells the user which engine produced it.
+ */
 async function generateExplanation(request: ExplainRequest): Promise<Explanation> {
+  const live = await fetchLiveExplanation(request);
+  if (live) {
+    LOG(
+      `live explanation ${live.id} via ${live.meta.model ?? 'unknown model'} ` +
+        `in ${live.meta.generationMs}ms${live.meta.cached ? ' (cached)' : ''}`,
+    );
+    return live;
+  }
+
+  LOG('falling back to demo mode');
   const startedAt = Date.now();
   await sleep(DEMO_LATENCY_MS);
   const explanation = createMockExplanation(request);

@@ -6,7 +6,8 @@ import packageJson from './package.json' with { type: 'json' };
  * Written in TS so version/name stay in sync with the release process.
  *
  * Permission philosophy (plan.md §security): declare exactly what ships today —
- * storage + sidePanel + two content-script host patterns. Nothing more.
+ * storage + sidePanel + localhost for the Phase 3 AI proxy + two content-script host
+ * patterns. Nothing more.
  */
 export default defineManifest({
   manifest_version: 3,
@@ -55,6 +56,9 @@ export default defineManifest({
   ],
 
   permissions: ['storage', 'sidePanel'],
+  // Phase 3: the local AI proxy is the only host grant — no <all_urls>, ever.
+  // Phase 4 replaces this with the deployed Edge Function origin (same policy).
+  host_permissions: ['http://localhost:8787/*'],
 
   commands: {
     'open-qeri-panel': {
