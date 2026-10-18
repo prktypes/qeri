@@ -39,7 +39,7 @@ app.get('/health', (c) =>
     model: config.model,
     live: config.openRouterApiKey !== null,
     cacheEntries: services.cache.size,
-    dailyUsage: services.quota.dailyUsage,
+    dailyUsage: services.quota.dailyUsage(),
   }),
 );
 

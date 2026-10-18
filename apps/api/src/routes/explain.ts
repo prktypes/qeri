@@ -78,7 +78,7 @@ export function createExplainRoutes(config: AppConfig, services: ExplainServices
     // ---- 3. Quota (cache hits pay nothing, but count for capacity) ---------
     const decision = services.quota.check();
     if (!decision.allowed) {
-      LOG(`quota blocked (${decision.reason}) — daily usage: ${services.quota.dailyUsage}`);
+      LOG(`quota blocked (${decision.reason}) — daily usage: ${services.quota.dailyUsage()}`);
       return c.json(
         { error: `Quota exhausted (${decision.reason}). Try again later.` },
         429,

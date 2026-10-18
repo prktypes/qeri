@@ -71,8 +71,9 @@ export class QuotaGuard {
     for (const stale of this.minute.keys()) if (stale < minuteKey) this.minute.delete(stale);
   }
 
-  get dailyUsage(): number {
-    const today = windowStart(Date.now(), DAILY_WINDOW);
+  /** Requests accepted in the window containing nowMs (injectable for tests). */
+  dailyUsage(nowMs: number = Date.now()): number {
+    const today = windowStart(nowMs, DAILY_WINDOW);
     return this.daily.get(today) ?? 0;
   }
 }
