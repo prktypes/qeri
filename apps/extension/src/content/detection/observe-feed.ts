@@ -34,6 +34,9 @@ export function attachExistingPosts(adapter: SiteAdapter, callback: OnExtraction
   activeAdapter = adapter;
   onExtraction = callback;
   document.querySelectorAll<HTMLElement>(adapter.postSelector).forEach(schedule);
+  // The initial batch must flush on its own schedule — without this the first
+  // chips appeared only after a later DOM mutation (regression found in the field).
+  ensureFlush();
 }
 
 /**

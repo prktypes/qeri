@@ -115,6 +115,9 @@ async function runExplainClick(args: {
     const result = await requestExplanation(request);
     if (result.ok) {
       setState('idle');
+    } else if (result.error.includes('context invalidated')) {
+      // Page predates the last extension reload — its content script is orphaned.
+      setErrorBrief('Reload');
     } else {
       setErrorBrief('Retry');
     }

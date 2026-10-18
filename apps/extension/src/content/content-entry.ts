@@ -14,6 +14,7 @@ import { resolveAdapter } from './adapters/registry';
  * against sites in the manifest, so this is a second line of defense.
  */
 const adapter = resolveAdapter(window.location.hostname);
+console.info(`[qeri:cs] content script booted; adapter=${adapter ? adapter.id : 'none'}`);
 if (adapter) {
   attachExistingPosts(adapter, decorateArticle);
   observeFeed(adapter, decorateArticle);
