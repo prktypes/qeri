@@ -8,7 +8,7 @@ export function PanelHeader() {
       <div>
         <h1 className="text-base font-bold text-neutral-900 dark:text-neutral-100">Qeri</h1>
         <p className="text-[11px] text-neutral-500 dark:text-neutral-400">
-          v0.1.0 · demo mode — nothing leaves your browser
+          v0.2.0 · demo mode — nothing leaves your browser
         </p>
       </div>
     </header>

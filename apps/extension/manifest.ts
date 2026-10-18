@@ -18,9 +18,22 @@ export default defineManifest({
   // sidePanel.open() requires Chrome ≥116
   minimum_chrome_version: '116',
 
+  // The Qeri mascot everywhere Chrome surfaces identity: toolbar icon, the
+  // chrome://extensions card, and the web-store listing later (Phase 7).
+  // CRXJS resolves these manifest-relative path strings and bundles the files.
+  icons: {
+    16: 'src/assets/qeri-logo-16.png',
+    32: 'src/assets/qeri-logo-32.png',
+    48: 'src/assets/qeri-logo-48.png',
+    128: 'src/assets/qeri-logo-128.png',
+  },
+
   // Clicking the toolbar icon opens the side panel (formal alternative to a popup
   // in v1 — the icon targets "read where you are", not "configure settings").
-  action: { default_title: 'Open Qeri panel' },
+  action: {
+    default_title: 'Open Qeri panel',
+    default_icon: { 16: 'src/assets/qeri-logo-16.png', 32: 'src/assets/qeri-logo-32.png' },
+  },
 
   side_panel: {
     default_path: 'src/panel/index.html',

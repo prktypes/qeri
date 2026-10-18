@@ -142,7 +142,7 @@ In Chrome: open `chrome://extensions` → enable **Developer mode** (top right) 
 
 | Check                                    | Expected result                                                                                                                                                                                                |
 | ---------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Open <https://x.com/home>                | Every feed post shows a small purple **✦ Explain** chip in its action bar                                                                                                                                      |
+| Open <https://x.com/home>                | Every feed post shows a small purple **✦ Explain chip with the Qeri logo** in its action bar; the toolbar/extension icons show the same mark                                                                   |
 | Click **✦ Explain**                      | Qeri side panel opens on the right, shows a brief loading skeleton, then a structured demo explanation (summary / why it matters / key terms / example / caveats / follow-up chips) with a **demo mode** badge |
 | Scroll the feed (infinite scroll)        | Newly appearing posts also get chips — no duplicates anywhere                                                                                                                                                  |
 | Click **✦ Explain** on another post      | Panel content is replaced by that post's explanation                                                                                                                                                           |
@@ -198,10 +198,16 @@ pnpm zip:ext       # → apps/extension/qeri-extension.zip (store artifact, veri
 
 Diagnose in this exact order — each symptom names the broken link:
 
-1. **Chip click never logs** — page DevTools console shows no `[qeri:cs] explain clicked`:
-   the content script is stale. Reload the extension (↻ on `chrome://extensions`) and
-   hard-refresh the X tab (`Ctrl+Shift+R`). Content scripts only inject on page loads
-   that happen _after_ install/reload.
+0. **“Stale page” first suspect.** If an extension reload happened while the x.com tab
+   stayed open, that page still carries the OLD, now-orphaned content script — clicks
+   silently die with “Extension context invalidated” (this is the classic reload
+   lifecycle, not a Qeri bug). Qeri v0.2.0 turns this into a visible signal: the chip
+   briefly shows **Reload** instead of failing silently. Remedy: always reload BOTH
+   the extension (`chrome://extensions` → ↻) AND the tab (`Ctrl+Shift+R`).
+1. **Chip click never logs** — page DevTools console shows no `[qeri:cs] content script
+booted` or `explain clicked` line: the content script is stale or booted on a page
+   shape the adapter does not own. Reload extension + tab; if removed, check that the
+   content script is meant to run this URL at all.
 2. **Click logs, but the service worker console shows nothing** — the worker is dead:
    open `chrome://extensions` → Qeri → _Inspect views: service worker_ and look for a
    boot error. Then click a chip again.
@@ -227,6 +233,42 @@ even a storage write — silently destroys it. Qeri therefore:
   to `onChanged`);
 - falls back to a toolbar badge (`1`) + `setPanelBehavior`-handled toolbar clicks and
   the Alt+Q command, which are always-trusted gesture paths.
+
+### Engineering lesson: content-script lifetime vs. extension reload (recorded 2026-10-18)
+
+Content scripts live as long as the PAGE, while the extension context lives as long as
+the extension. Reload the extension and every already-open tab is stranded with a
+**content script whose `chrome.runtime` is dead** — every message silently throws
+“Extension context invalidated,” which _feels exactly like_ “the feature is broken,”
+even though nothing regressed in code. Field reports after Phase 2 match this 1:1.
+Mitigations shipped in v0.2.0:
+
+- the chip surfaces the state — a transport error naming `context invalidated` shows
+  **Reload** on the chip instead of failing silently;
+- `content-entry` logs `[qeri:cs] content script booted; adapter=…` so an empty console
+  = stale script, unambiguous evidence;
+- docs elevate this to step 0 of the troubleshooting tree.
+
+A related latent regression got fixed the same day: the Phase 2 observer rewrite forgot
+to flush the boot-time batch of already-rendered posts, so chips appeared only after
+the feed's first real DOM mutation. `attachExistingPosts()` now always schedules its
+own flush.
+
+### Branding: the Qeri logo (v0.2.0)
+
+`qeri-logo.png` (1254×1254 original at the repo root) is now the product mark
+everywhere Chrome surfaces identity — from `apps/extension/src/assets/`:
+
+- **Toolbar + extension card**: manifest `icons` (16/32/48/128) and
+  `action.default_icon` (16/32). Because CRXJS bundles the manifest through esbuild
+  (no png loader in that pass), icon references are manifest-relative **path strings**
+  which CRXJS copies verbatim (`dist/src/assets/*.png`) — lesson: imports don't work
+  in `manifest.ts`, strings do.
+- **Chip**: the 16 px icon is imported in the content script and Vite **inlines it as
+  a base64 data URI** — ideal for the closed shadow DOM: no `web_accessible_resources`
+  entry, no chrome-extension URL, renders on any page.
+- **Panel header**: the temporary inline-SVG placeholder was replaced by the real
+  asset (bundled locally — zero network requests, privacy stance intact).
 
 ---
 
@@ -643,3 +685,14 @@ is actually _visible_ to the user before any AI exists.
     demo mode narrates context shape. New dev tooling: happy-dom for DOM-level tests.
     All gates green: tests 29/29 ✅ typecheck ✅ lint ✅ build ✅. Fixture drift protocol +
     live-capture checklist recorded in `tests/fixtures/README.md`.
+- **2026-10-18 — field report “Explain click does nothing” + branding.** Diagnosis: the
+  click→panel code path is unchanged from the 2026-10-17 gesture fix (the service
+  worker still opens the panel synchronously at message entry); the symptom matches
+  orphaned content scripts after an extension reload (context invalidated → silent
+  click death). Shipped: a visible **Reload** chip state for that exact error, the
+  `[qeri:cs] content script booted` boot marker, and the initial-flush fix in
+  `attachExistingPosts`. Branding: `qeri-logo.png` shipped as manifest/extension icons
+  (16/32/48/128), toolbar action icon, chip mark (base64-inlined — no web-accessible
+  dependency), and panel header (replacing the SVG placeholder). Version bumped to
+  v0.2.0. Lessons recorded: content-script lifetime vs extension reload; CRXJS
+  manifest assets use path strings, not imports.

@@ -1,6 +1,7 @@
 import type { ExplainRequest } from '@qeri/shared';
 import type { SiteExtraction } from '../adapters/types';
 import { requestExplanation } from '../messaging/send-explain';
+import logoUrl from '../../assets/qeri-logo-16.png';
 
 /**
  * The Explain chip (plan.md §Phase 1).
@@ -49,8 +50,7 @@ const HOST_CSS = `
   .${LABEL_CLASS} { display: inline-block; }
 `;
 
-const BTN_HTML =
-  '<span aria-hidden="true">✦</span><span class="qeri-explain-label">Explain</span>';
+const BTN_HTML = `<img src="${logoUrl}" alt="" aria-hidden="true" style="width:14px;height:14px;border-radius:3px;"><span class="qeri-explain-label">Explain</span>`;
 
 /**
  * Decorate one article with an Explain chip appended to its action bar.
