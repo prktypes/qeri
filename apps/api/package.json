@@ -1,0 +1,22 @@
+{
+  "name": "@qeri/api",
+  "version": "0.3.0",
+  "private": true,
+  "description": "Qeri AI explanation service. Local Phase 3 stand-in for the Supabase Edge Function (Phase 4): validate → quota → cache → OpenRouter structured output → re-validate. The OpenRouter key lives in a git-ignored .env and never in any client bundle.",
+  "type": "module",
+  "main": "./src/index.ts",
+  "scripts": {
+    "dev": "tsx watch src/index.ts",
+    "start": "tsx src/index.ts",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@hono/node-server": "^1.19.5",
+    "hono": "^4.10.9"
+  },
+  "devDependencies": {
+    "@types/node": "^24.19.2",
+    "tsx": "^4.20.6",
+    "typescript": "~5.9.3"
+  }
+}

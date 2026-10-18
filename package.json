@@ -18,7 +18,9 @@
     "format:check": "prettier --check .",
     "typecheck": "pnpm -r typecheck",
     "test": "vitest run",
-    "test:watch": "vitest"
+    "test:watch": "vitest",
+    "dev:api": "pnpm --filter @qeri/api dev",
+    "start:api": "pnpm --filter @qeri/api start"
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",
