@@ -37,8 +37,8 @@ export class MockExplainer {
       keyTerms: terms,
       example: exampleFor(request),
       caveats: [
-        `Demo content — generated locally by Qeri v0.1, not by a language model yet.`,
-        `No sources were consulted. Real explanations will cite uncertainty carefully.`,
+        `Demo content — generated locally by Qeri, not by a language model (the Qeri service is unreachable right now).`,
+        `No sources were consulted. Live explanations will cite their limits carefully.`,
       ],
       followUps: [
         'Why does this matter?',
@@ -147,7 +147,7 @@ function contextNoteFor(request: ExplainRequest): string {
 }
 
 function whyItMattersFor(request: ExplainRequest): string {
-  return `Qeri's value is context without leaving the page. Right now this text only proves the pipeline: extraction → message → panel state → render. Real “why it matters” analysis for the post arrives with the OpenRouter integration in Phase 3${
+  return `Qeri's value is context without leaving the page. This demo text proves the pipeline: extraction → message → panel state → render. Live model-powered analysis appears here whenever the Qeri service is reachable${
     request.mode === 'deep' ? ' (deep mode will expand competing interpretations).' : '.'
   }`;
 }
@@ -155,5 +155,5 @@ function whyItMattersFor(request: ExplainRequest): string {
 function exampleFor(request: ExplainRequest): string {
   return `Try a different post to see the flow again${
     request.sourceUrl ? ` (this one was captured from ${request.sourceUrl})` : ''
-  }. In Phase 3 this slot will show a real concrete analogy generated from the post's subject.`;
+  }. When the Qeri service is reachable, this slot shows a real concrete analogy generated from the post's subject.`;
 }
