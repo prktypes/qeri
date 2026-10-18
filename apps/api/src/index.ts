@@ -1,6 +1,7 @@
 import { serve } from '@hono/node-server';
 import { Hono } from 'hono';
 import { loadConfig } from './config';
+import { createExplainRoutes, createServices } from './routes/explain';
 
 /**
  * Qeri API entry point (plan.md §Phase 3).
@@ -29,6 +30,7 @@ if (config.openRouterApiKey === null) {
   LOG(`OpenRouter key loaded (…${config.openRouterApiKey.slice(-4)}) — live mode available`);
 }
 
+const services = createServices(config);
 const app = new Hono();
 
 app.get('/health', (c) =>
@@ -36,6 +38,17 @@ app.get('/health', (c) =>
     ok: true,
     model: config.model,
     live: config.openRouterApiKey !== null,
+    cacheEntries: services.cache.size,
+    dailyUsage: services.quota.dailyUsage,
+  }),
+);
+
+app.route('/', createExplainRoutes(config, services));
+
+app.get('/usage', (c) =>
+  c.json({
+    totals: services.ledger.totals(),
+    recent: services.ledger.snapshot(50),
   }),
 );
 

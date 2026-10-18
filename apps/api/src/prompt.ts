@@ -3,6 +3,14 @@ import type { ExplainRequest } from '@qeri/shared';
 /**
  * Prompt engineering for the explain endpoint (plan.md §Phase 3).
  *
+ * PROMPT_VERSION participates in the cache key: change the rules → change the
+ * version → old prose never bleeds into new explanations.
+ */
+
+/** Bump whenever buildSystemPrompt / output schema semantics change. */
+export const PROMPT_VERSION = 'p3-v1';
+
+/**
  * Two halves:
  * 1. `buildSystemPrompt(request)` — rules; deterministic, no post data.
  * 2. `buildUserPayload(request)` — the post data *as data*: JSON with labeled fields
