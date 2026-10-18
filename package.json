@@ -1,6 +1,6 @@
 {
   "name": "qeri",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "private": true,
   "description": "Qeri — AI that explains what you read. A Chrome extension that adds a lightweight understanding layer while you browse.",
   "type": "module",
