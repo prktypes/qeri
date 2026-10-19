@@ -14,11 +14,11 @@ doesn't already anticipate: entries are row-shaped (one row = one `SavedExplanat
 
 ## 2. Collect the three credentials
 
-| Credential | Where | Goes where (planned) | Committed to git? |
-| --- | --- | --- | --- |
-| Project URL | Settings → API | extension config + API `.env` | ❌ never |
-| `anon` public key | Settings → API | extension config + API `.env` | ❌ never (public-by-design, but keep it out of the repo) |
-| `service_role` key | Settings → API | **Edge Function env only** — never the extension, never the API client | ❌ never |
+| Credential         | Where          | Goes where (planned)                                                   | Committed to git?                                        |
+| ------------------ | -------------- | ---------------------------------------------------------------------- | -------------------------------------------------------- |
+| Project URL        | Settings → API | extension config + API `.env`                                          | ❌ never                                                 |
+| `anon` public key  | Settings → API | extension config + API `.env`                                          | ❌ never (public-by-design, but keep it out of the repo) |
+| `service_role` key | Settings → API | **Edge Function env only** — never the extension, never the API client | ❌ never                                                 |
 
 ## 3. Apply the migration
 
@@ -43,7 +43,7 @@ three policies listed under the table's Policies tab.
 
 ## Security posture
 
-- The `anon` key identifies the *project*, not a user — it is safe to expose in the
+- The `anon` key identifies the _project_, not a user — it is safe to expose in the
   extension bundle **because RLS is the real gate**. Without a valid user JWT only the
   policies above (all `authenticated`-only) can touch the table.
 - `service_role` bypasses RLS entirely. It exists only inside the Edge Function runtime

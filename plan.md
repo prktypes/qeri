@@ -115,7 +115,7 @@ qeri/
 | 1     | Extension foundation (MV3 + side panel) | Explain chip injects; panel shows **demo** response | ✅     |
 | 2     | X extraction engine                     | Robust post detection + fixtures + tests            | ✅     |
 | 3     | AI explanation engine (OpenRouter)      | Real structured explanations; quota cache           | ✅     |
-| 4     | Accounts & saved knowledge (Supabase)   | Save + history, row-level security                  | ⬜     |
+| 4     | Accounts & saved knowledge (Supabase)   | Save + history, row-level security                  | ◐ s1   |
 | 5     | Reliability, privacy, security          | Rate limits, injection hardening, a11y, Sentry      | ⬜     |
 | 6     | Private beta polish                     | Real fixes from testers                             | ⬜     |
 | 7     | Web store launch                        | Listing assets, privacy policy, review-safe builds  | ⬜     |
@@ -123,7 +123,7 @@ qeri/
 
 ---
 
-## How to test the current version (Phase 0–3 = demo mode + live AI)
+## How to test the current version (Phase 0–4.s1 = demo · live AI · local library)
 
 ### 1. Build & install the extension
 
@@ -172,6 +172,19 @@ pnpm dev:api    # terminal 1 — [qeri:api] OpenRouter key loaded; listening on 
 | Open an image-only post                                | No chip (text extraction is the Phase 2 scope; image captioning comes later)                                                                                                              |
 | Timeline posts back-to-back                            | Posts do **not** inherit each other as fake parent context (timeline section guard)                                                                                                       |
 | Run the fixture suite (`pnpm test`)                    | 29 unit tests green, incl. the 6-fixture detection benchmark (11 articles → 9 chip targets, quoted box intentionally excluded)                                                            |
+
+**Phase 4 stage 1 additions (saved knowledge):**
+
+| Check                                                   | Expected result                                                                                                                                              |
+| ------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| Explain any post, press **Save** on the card            | The button flips to a **saved** chip; the **Library** tab badge counts the entry                                                                             |
+| Open the **Library** tab                                | The entry card shows author, save time, an engine dot (emerald live / purple demo) and a 2-line preview of the post; a “stored locally in this browser” note |
+| **Open** an entry                                       | The SAME explanation card renders with a **← Library** back bar and its `saved` chip                                                                         |
+| Close the panel (or the whole browser) and come back    | Library entries persist (`chrome.storage.local`) — the badge count is unchanged                                                                              |
+| Explain the same post again, press **Save**             | Still ONE entry — upsert by content id refreshes its timestamp and moves it to the top                                                                       |
+| Delete an entry (🗑) / **Clear all → Clear everything?** | The row disappears at once, the count updates; a full clear reveals the empty state (“Explain a post and press Save…”)                                       |
+| DevTools → Application → Extension storage → local      | Key `qeri.library.v1` holds the validated `{ version, entries }` envelope                                                                                    |
+| Service-worker console during save/delete/clear         | `[qeri:sw] saved <id> — library size N`, `deleted …`, `library cleared` lines                                                                                |
 
 ### 3. Where to look when something misbehaves
 
@@ -649,6 +662,54 @@ zero network calls.
 
 ---
 
+## Phase 4 (stage 1) — saved knowledge, local-first (2026-10-19)
+
+Phase 4 ships in two stages. **Stage 1** (this one) builds everything that does not
+need a Supabase project: the saved-knowledge contract, the persistent on-device store,
+and the full panel UX. **Stage 2** (activation pending) swaps the store's backend for
+Supabase sync + accounts. The split is deliberate: the data contract is settled once
+and the cloud becomes an implementation detail behind it, not a redesign.
+
+### Concepts, in implementation order
+
+1. **Stage split: local-first, cloud second.** The library's UX and contract were
+   buildable without infra; the entries are _row-shaped_ (one entry = one future
+   Supabase row, `payload` = the exact `Explanation` JSON), so the sync layer maps
+   1:1 with no migration of concepts — only of bytes.
+2. **Explanations are immutable artifacts.** A save wraps the FULL validated
+   `Explanation` plus `savedAt`. Re-saving the same post **upserts by content id**:
+   it refreshes the entry's position (and timestamp) instead of duplicating storage.
+   The cloud table therefore has NO `UPDATE` policy — regenerating makes a new
+   artifact; editing one is nonsensical.
+3. **Single-writer storage discipline.** The service worker is the ONLY writer of
+   `chrome.storage.local`. The panel never writes and never polls: it subscribes to
+   `storage.onChanged`, so every open surface (this panel, a reopened one, a future
+   content-script saver) converges on one truth with zero message fan-out.
+4. **A validated write gate.** One function owns writes (`writeLibrary`) and refuses
+   anything the shared schema rejects — garbage can never reach disk. Reads are
+   equally total: a malformed/missing payload degrades to the sanctioned empty
+   library instead of wedging the UI.
+5. **Library messaging envelope.** `qeri/library/{save,delete,clear}` flow panel →
+   worker; every op acks with the post-operation entry count (drives the tab badge).
+   The ack schema is checked at both ends and the call is capped at 10 s. Reads have
+   no message at all — that's what `onChanged` is for (concept 3).
+6. **The cap is a designed constant.** `MAX_LIBRARY_ENTRIES = 500` with the math
+   committed: ~2–3 KB per entry ≈ 1.2 MB worst case, comfortably inside Chrome's
+   10 MB local quota — **no `unlimitedStorage` permission requested**. Newest-first
+   arrays, oldest evicted; the shared helpers make the invariant unit-tested law.
+7. **Two-step destructive confirmation.** "Clear all" arms; a second click commits
+   ("Clear everything?"); a 3.5 s timer disarms a stray first click. No
+   `window.confirm` — the in-panel control keeps attention AND styling.
+8. **One renderer for saved and fresh.** A saved entry renders through the SAME
+   `ExplanationView` (same shape, guaranteed by the shared schema), with only a back
+   bar added. Tab switches reset the borrowed view. Zero drift, by construction.
+9. **Provenance survives the library.** Each row carries the engine dot and the
+   save button flips to a `saved` chip driven by the live library — the panel keeps
+   its honest-signal rule in every list it renders.
+10. **What stage 1 deliberately does NOT do.** No accounts, no cross-device sync,
+    no server round-trips for saves. The footer says where the data lives ("stored
+    locally in this browser") — the first privacy question answered honestly.
+
 ## Data contracts (v1)
 
 ### `ExplainRequest` — content script → service worker → (Phase 3) API
@@ -710,6 +771,27 @@ zero network calls.
 { "ok": false, "error": "text: Post text is required" }
 ```
 
+### `SavedExplanation` + `SavedLibrary` — the knowledge artifacts (Phase 4)
+
+```jsonc
+// one entry: the FULL immutable Explanation + the moment the user pressed Save
+{ "savedAt": "2026-10-19T12:30:00.000Z", "explanation": { … } }
+
+// the store envelope (chrome.storage.local key: "qeri.library.v1")
+{ "version": 1, "entries": [ { … } ] }   // newest-first, ≤ MAX_LIBRARY_ENTRIES (500)
+
+// panel → worker messages (validated both ends; ack carries entry total)
+{ "type": "qeri/library/save",   "payload": { … } }        // payload: Explanation
+{ "type": "qeri/library/delete", "payload": { "id": "…" } } // explanation content id
+{ "type": "qeri/library/clear" }
+// ack: { "ok": true, "total": 3 } | { "ok": false, "error": "…" }
+```
+
+Reads ride `chrome.storage.onChanged` — no list message exists. `upsertSavedEntry`
+dedupes by `explanation.id` and evicts the oldest past the cap; the same pure helpers
+(`decodeLibrary`, `upsertSavedEntry`, `removeSavedEntry`, `findSavedEntry`) will serve
+the Supabase sync stage unchanged.
+
 ## Security & privacy principles enforced from day one
 
 1. **Minimal permissions** — `storage` + `sidePanel` only; content scripts on
@@ -723,8 +805,11 @@ zero network calls.
    size/shape caps; the model is told the post is data, not instructions; the API
    re-validates output before serving; nothing from the page is executed, followed as
    an instruction, or persisted without validation.
-4. **Session-only state** — `chrome.storage.session` clears when the browser closes;
-   the API keeps no persisted state this phase (cache/ledger are in-memory).
+4. **Persistence is explicit and scoped.** Explanations in flight stay in
+   `chrome.storage.session` (cleared when the browser closes). The Phase 4 library is
+   the FIRST persistent client data — it lives in `chrome.storage.local` on the same
+   profile, is user-deletible per entry or entirely, and says so in the UI. The API
+   keeps no persisted state (cache/ledger are in-memory).
 5. **Zero network in demo mode** — with the API unreachable, the extension stays fully
    functional with no external requests; fonts/icons/logic are inline/local.
 6. **Log hygiene** — API logs carry hashes, ids, tokens, cost and timing; never the
@@ -743,9 +828,14 @@ zero network calls.
 
 ## Next up
 
-- **Phase 4 — accounts & saved knowledge (Supabase)**: swap the local API for a
-  deployed Edge Function (same contract), real auth + row-level security, saved
-  explanations and history, quota keyed by identity instead of global counters.
+- **Phase 4 finish — accounts & cloud sync (needs your Supabase project).** Create the
+  project with `supabase/README.md` §1–3 (~10 minutes), then provide the **Project URL**
+  and **anon key** (the `service_role` key never leaves the function environment — do
+  not paste it in chat; it goes straight into the Edge Function env later). Then: deploy
+  the `/explain` contract as a Supabase Edge Function, add panel sign-in (magic link or
+  Google), sync the local library to the RLS-protected table (push/pull/merge by
+  content id — the stage-1 contracts and store operations are already shaped for it),
+  and move quotas from global counters to `auth.uid()`-keyed identities.
 - Later phases as per roadmap (hardening, beta, store, growth).
 
 ## Session log (append-only)
@@ -807,3 +897,23 @@ zero network calls.
   origin). LIVE-verified: ~6.1s/798tok/~$0.00027 first call, 41ms cached repeat.
   Demo copy updated to explain fallback honestly. Quality set + prompt iteration
   continues live.
+- **2026-10-19 — Phase 4 stage 1 complete: saved knowledge, local-first.** The
+  saved-knowledge contract landed in `@qeri/shared`: `SavedExplanation` = `savedAt` +
+  the FULL immutable `Explanation` (row-shaped for the cloud stage), `SavedLibrary` =
+  versioned envelope with a 500-entry cap (~1.2 MB worst case — inside Chrome's 10 MB
+  local quota, so no `unlimitedStorage` permission). Pure store ops (upsert/remove/
+  find, newest-first, evict-oldest) are shared + unit-tested so the Supabase sync
+  reuses them verbatim; re-saving refreshes position instead of duplicating (upsert
+  by content id). Storage discipline: the service worker is the ONLY writer behind a
+  schema-gated write; the panel subscribes to `storage.onChanged` (open surfaces
+  converge, zero polling). Library messages `qeri/library/{save,delete,clear}` ack
+  with the post-op entry count, validated both ends, 10 s cap. Panel: Explain |
+  Library tabs with a live count badge; Save beside the provenance badge (busy/failed
+  states are local — the library re-renders from storage); LibraryView lists entries
+  (author, timestamp, engine dot, preview) with per-row open/delete, an honest empty
+  state, and a two-step “Clear everything?” confirm (arm → commit, 3.5 s disarm; no
+  `window.confirm`). Re-opening a saved entry renders the SAME `ExplanationView`
+  with a back bar — one renderer, zero drift. Supabase: RLS migration + activation
+  runbook landed inert under `supabase/` (policies authenticated-only, no UPDATE by
+  design — artifacts regenerate, never mutate). Version stays 0.3.0 until cloud sync
+  completes Phase 4. Gates: 47/47 tests, typecheck, lint, format, build, zip.
