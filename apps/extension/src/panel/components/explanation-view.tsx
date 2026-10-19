@@ -1,6 +1,8 @@
 import type { Explanation } from '@qeri/shared';
 import type { ReactNode } from 'react';
-import { Lightbulb, Quote } from 'lucide-react';
+import { useState } from 'react';
+import { ArrowLeft, Bookmark, BookmarkCheck, Lightbulb, Quote } from 'lucide-react';
+import { saveToLibrary } from '../messaging';
 
 /** Card framing + heading used by every explanation section (visual rhythm helper). */
 function Section({ title, children }: { title: string; children: ReactNode }) {
@@ -15,9 +17,9 @@ function Section({ title, children }: { title: string; children: ReactNode }) {
 }
 
 /**
- * Provenance badge (plan.md §Phase 3): the panel renders the SAME explanation shape
- * for both engines, so the badge is the single honest signal of who generated it.
- * Live mode shows the effective model (minus the vendor slug), demo keeps its badge.
+ * The provenance badge is the panel's single honest engine signal (this explanation's
+ * meta alone decides live vs demo); Save lives next to it as the one persistent-data
+ * affordance on the card (plan.md §Phase 4).
  */
 function MetaBadge({
   generator,
@@ -44,20 +46,87 @@ function MetaBadge({
   );
 }
 
-export function ExplanationView({ explanation }: { explanation: Explanation }) {
+type SaveUiState = 'idle' | 'saving' | 'failed';
+
+function SaveButton({ explanation, saved }: { explanation: Explanation; saved: boolean }) {
+  const [ui, setUi] = useState<SaveUiState>('idle');
+
+  async function onSave(): Promise<void> {
+    if (saved || ui === 'saving') return;
+    setUi('saving');
+    const ack = await saveToLibrary(explanation);
+    // Library re-renders from storage regardless; locally we only surface failures.
+    setUi(ack.ok ? 'idle' : 'failed');
+    if (!ack.ok) window.setTimeout(() => setUi('idle'), 2200);
+  }
+
+  if (saved) {
+    return (
+      <span
+        title="This explanation is in your library"
+        className="flex shrink-0 items-center gap-1 rounded-full bg-qeri-100 px-2 py-0.5 text-[10px] font-semibold text-qeri-700 dark:bg-qeri-700/40 dark:text-qeri-200"
+      >
+        <BookmarkCheck className="h-3 w-3" aria-hidden="true" />
+        saved
+      </span>
+    );
+  }
+
+  const label = ui === 'failed' ? 'Retry' : 'Save';
+  return (
+    <button
+      type="button"
+      title="Save this explanation to your library"
+      aria-label="Save this explanation to your library"
+      onClick={() => void onSave()}
+      disabled={ui === 'saving'}
+      className={`flex shrink-0 items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-semibold transition-colors ${
+        ui === 'failed'
+          ? 'bg-rose-100 text-rose-700 dark:bg-rose-700/30 dark:text-rose-200'
+          : 'bg-neutral-100 text-neutral-600 hover:bg-qeri-100 hover:text-qeri-700 dark:bg-neutral-800 dark:text-neutral-300 dark:hover:bg-qeri-700/30 dark:hover:text-qeri-200'
+      }`}
+    >
+      <Bookmark className="h-3 w-3" aria-hidden="true" />
+      {label}
+    </button>
+  );
+}
+
+export function ExplanationView({
+  explanation,
+  saved,
+  onBack,
+}: {
+  explanation: Explanation;
+  saved: boolean;
+  onBack?: () => void;
+}) {
   const { request, summary, whyItMatters, keyTerms, example, caveats, followUps, meta } =
     explanation;
 
   return (
     <div className="flex min-h-full flex-col gap-3">
+      {/* Back navigation when the card renders from the library (Phase 4) */}
+      {onBack && (
+        <button
+          type="button"
+          onClick={onBack}
+          className="flex w-fit items-center gap-1.5 text-xs font-semibold text-neutral-500 transition-colors hover:text-qeri-600 dark:text-neutral-400 dark:hover:text-qeri-300"
+        >
+          <ArrowLeft className="h-3.5 w-3.5" aria-hidden="true" />
+          Library
+        </button>
+      )}
+
       {/* Source post preview — a quote card first, so context precedes analysis */}
       <div className="rounded-xl border border-neutral-200 bg-white p-4 shadow-sm dark:border-neutral-800 dark:bg-neutral-900">
         <div className="mb-2 flex items-center gap-2 text-xs text-neutral-500">
-          <Quote className="h-3.5 w-3.5" />
+          <Quote className="h-3.5 w-3.5 shrink-0" />
           <span className="truncate">
             {request.authorHandle ? `${request.authorHandle} · ` : ''}original post
           </span>
           <MetaBadge generator={meta.generator} model={meta.model} />
+          <SaveButton explanation={explanation} saved={saved} />
         </div>
         <p className="line-clamp-6 text-sm whitespace-pre-line text-neutral-700 dark:text-neutral-300">
           {request.text}
