@@ -30,3 +30,11 @@ export const DEMO_LATENCY_MS = 450;
 
 /** Schema version string — bump whenever the Explanation shape happens to change. */
 export const EXPLANATION_SCHEMA_VERSION = '0.1.0';
+
+/**
+ * Local saved-knowledge library caps (plan.md §Phase 4). Entries hold a full
+ * Explanation (~2–3 KB); 500 entries ≈ 1.2 MB — comfortably inside Chrome's
+ * 10 MB `chrome.storage.local` quota with NO extra permission needed. When the
+ * Supabase sync lands, this stays the on-device mirror cap.
+ */
+export const MAX_LIBRARY_ENTRIES = 500;

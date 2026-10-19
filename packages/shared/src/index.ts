@@ -4,6 +4,7 @@
  */
 export * from './constants';
 export * from './schemas/explain';
+export * from './schemas/library';
 export * from './schemas/panel';
 export * from './messaging/messages';
 export * from './mocks/mock-explanation';
