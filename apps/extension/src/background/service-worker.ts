@@ -1,16 +1,23 @@
 import {
   DEMO_LATENCY_MS,
   ExplainRequestSchema,
+  LIBRARY_CLEAR_MSG,
+  LIBRARY_DELETE_MSG,
+  LIBRARY_SAVE_MSG,
   createMockExplanation,
   INITIAL_PANEL_STATE,
   PANEL_STATE_STORAGE_KEY,
   isExplainRequestMessage,
+  isLibraryMessage,
   type ExplainAck,
   type ExplainRequest,
   type Explanation,
+  type LibraryAck,
+  type LibraryMessage,
   type PanelState,
 } from '@qeri/shared';
 import { fetchLiveExplanation } from './explain-client';
+import { clearSavedLibrary, deleteSavedExplanation, saveExplanation } from './library/store';
 
 /**
  * Service worker orchestration (plan.md §Phase 1).
@@ -128,24 +135,54 @@ async function handleExplainRequest(
 // ---------------------------------------------------------------------------
 
 chrome.runtime.onMessage.addListener((message, sender, respond) => {
-  if (!isExplainRequestMessage(message)) {
-    return false; // not ours — leave the channel for other listeners
+  if (isExplainRequestMessage(message)) {
+    // Consume the user gesture IMMEDIATELY: open() must run inside the message
+    // delivery task, before any await (see the Chromium gotcha note above).
+    const tabId = sender.tab?.id;
+    void openPanelForTab(tabId).then((opened) => {
+      LOG(`panel ${opened ? 'opened' : 'NOT opened (blocked)'} for tab ${tabId ?? '(none)'}`);
+    });
+
+    // The explanation pipeline is independent of panel visibility: state lands in
+    // session storage, and the panel (open or opening) converges via onChanged.
+    void handleExplainRequest(message.payload, respond);
+    return true; // keep the channel open for the async ack
   }
 
-  // Consume the user gesture IMMEDIATELY: open() must run inside the message
-  // delivery task, before any await (see the Chromium gotcha note above).
-  const tabId = sender.tab?.id;
-  void openPanelForTab(tabId).then((opened) => {
-    LOG(`panel ${opened ? 'opened' : 'NOT opened (blocked)'} for tab ${tabId ?? '(none)'}`);
-  });
+  if (isLibraryMessage(message)) {
+    void handleLibraryMessage(message, respond);
+    return true; // save/delete/clear ack after async storage work
+  }
 
-  // The explanation pipeline is independent of panel visibility: state lands in
-  // session storage, and the panel (open or opening) converges via onChanged.
-  void handleExplainRequest(message.payload, respond);
-
-  // Keep the message channel open — respond() fires after async work completes.
-  return true;
+  return false; // not ours — leave the channel for other listeners
 });
+
+/**
+ * Library operations (plan.md §Phase 4): the panel sends validated CRUD intents,
+ * the worker is the only writer, and every ack carries the post-op entry total.
+ */
+async function handleLibraryMessage(
+  message: LibraryMessage,
+  respond: (ack: LibraryAck) => void,
+): Promise<void> {
+  try {
+    switch (message.type) {
+      case LIBRARY_SAVE_MSG:
+        respond(await saveExplanation(message.payload));
+        break;
+      case LIBRARY_DELETE_MSG:
+        respond(await deleteSavedExplanation(message.payload.id));
+        break;
+      case LIBRARY_CLEAR_MSG:
+        respond(await clearSavedLibrary());
+        break;
+    }
+  } catch (error: unknown) {
+    const detail = error instanceof Error ? error.message : 'Unknown library failure.';
+    LOG('library operation failed:', detail);
+    respond({ ok: false, error: 'Library operation failed.' });
+  }
+}
 
 // Toolbar click opens the panel via browser-handled behavior — the most reliable
 // gesture path Chrome offers (works even when message-driven opens are blocked).
