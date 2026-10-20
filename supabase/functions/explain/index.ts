@@ -1,7 +1,7 @@
 // Supabase Edge Function — Phase 4: /explain contract
-// 
+//
 // This function re-exports the same logic as apps/api's POST /explain:
-//   - Validate request body via shared Zod schema (ExplainRequest)
+//   - Validate request body via shared Zod schema
 //   - Check per-identity quota (supabase-backed, not global counters)
 //   - Check cache (Supabase-backed, not in-memory per process)
 //   - OpenRouter client with strict structured output
@@ -17,22 +17,12 @@
 
 import { serve } from '@supabase/functions-server';
 import { z } from 'zod';
-import { explainRequestSchema, explanationSchema } from '@qeri/shared';
+import { explanationSchema } from '@qeri/shared';
 import { fetchFromOpenRouter } from './openrouter';
 
 // ---------------------------------------------------------------------------
 // Input validation (identical to apps/api routes/explain.ts)
 // ---------------------------------------------------------------------------
-
-type ExplainRequest = z.infer<typeof explainRequestSchema>;
-
-const explainRequestSchema = z.object({
-  text: z.string().min(1).max(4000),
-  mode: z.enum(['quick', 'simple', 'deep']).default('simple'),
-  language: z.string().default('en'),
-  context: z.string().optional(),
-  contextKind: z.enum(['quoted', 'parent', 'thread']).optional(),
-});
 
 const explanationSchema = z.object({
   request: z.object({
@@ -71,12 +61,12 @@ serve(async (req) => {
 
   // 2️⃣ Parse + validate the request body
   const body: unknown = await req.json();
-  const parsed = explainRequestSchema.safeParse(body);
+  const parsed = explanationSchema.safeParse(body);
   if (!parsed.success) {
-    return new Response(
-      JSON.stringify({ ok: false, error: parsed.error.issues[0].message }),
-      { status: 400, headers: { 'Content-Type': 'application/json' } },
-    );
+    return new Response(JSON.stringify({ ok: false, error: parsed.error.issues[0].message }), {
+      status: 400,
+      headers: { 'Content-Type': 'application/json' },
+    });
   }
 
   // 3️⃣ Quota check — per‑identity (once Supabase auth is wired)
@@ -97,7 +87,7 @@ serve(async (req) => {
     model: openRouterModel,
     apiKey,
     schema: explanationSchema,
-    prompt: 'You are Qeri. Explain the user\'s X post in 6 structured blocks.',
+    prompt: "You are Qeri. Explain the user's X post in 6 structured blocks.",
     input: parsed.data,
   });
 
@@ -120,11 +110,8 @@ serve(async (req) => {
   //    });
 
   // 7️⃣ Return the explanation payload the panel already knows how to render
-  return new Response(
-    JSON.stringify({ ok: true, explanation: valid.data }),
-    {
-      status: 200,
-      headers: { 'Content-Type': 'application/json' },
-    },
-  );
+  return new Response(JSON.stringify({ ok: true, explanation: valid.data }), {
+    status: 200,
+    headers: { 'Content-Type': 'application/json' },
+  });
 });
