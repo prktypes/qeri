@@ -16,6 +16,7 @@ import { createExplainRoutes, createServices } from './routes/explain';
  *
  * Security stance: the OpenRouter key exists only in process memory + .env. The
  * extension is the ONLY intended caller; host permissions scope it to localhost.
+ * Phase 5 adds HTTP security headers (HSTS, X-Frame-Options, etc.) for defense-in-depth.
  */
 
 const LOG = (...args: unknown[]): void => console.info('[qeri:api]', ...args);
@@ -32,6 +33,8 @@ if (config.openRouterApiKey === null) {
 
 const services = createServices(config);
 const app = new Hono();
+
+// ... rest remains the same
 
 app.get('/health', (c) =>
   c.json({
