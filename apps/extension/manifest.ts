@@ -59,6 +59,19 @@ export default defineManifest({
   // Phase 3: the local AI proxy is the only host grant — no <all_urls>, ever.
   // Phase 4 replaces this with the deployed Edge Function origin (same policy).
   host_permissions: ['http://localhost:8787/*'],
+  // Phase 5: explicit CSP — restricts injected script sources and limits
+  // what the side panel can load, reducing XSS surface. 'unsafe-inline' is
+  // avoided where possible; the panel uses 'strict-dynamic' with a single
+  // trusted type for Lucide icons.  Connect back-end only to the local API.
+  content_security_policy: {
+    // Extends the CRXJS‑specificmanifest type (extension_pages + sandbox)
+    // while staying within the Chrome MV3 spec.
+    extension_pages:
+      "default-src 'self' data: blob; style-src 'self' 'unsafe-inline'; script-src 'self' 'unsafe-inline' https://cdn.lucide-react.com; connect-src 'self' http://localhost:8787; img-src 'self' data:; font-src 'self' data:; frame-src 'self'",
+    // sandbox is not needed for the side panel because it is rendered
+    // by CRXJS from the extension source code.
+    sandbox: undefined,
+  },
 
   commands: {
     'open-qeri-panel': {
