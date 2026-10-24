@@ -20,6 +20,8 @@ export interface AppConfig {
   readonly rateLimitPerMinute: number;
   /** In‑memory cache size cap (Phase 3). Will be Supabase‑backed in Phase 4. */
   readonly cacheMaxEntries: number;
+  /** Beta feature flag — read from BETA_ENABLED env var; defaults to false. */
+  readonly betaEnabled: boolean;
 }
 
 function parseEnvFile(path: string): Record<string, string> {
@@ -54,6 +56,7 @@ export function loadConfig(cwd: string = process.cwd()): AppConfig {
   const quotaDaily = Number.parseInt(env('QUOTA_DAILY') ?? '40', 10);
   const rateLimitPerMinute = Number.parseInt(env('RATE_LIMIT_PER_MINUTE') ?? '8', 10);
   const cacheMaxEntries = Number.parseInt(env('CACHE_MAX_ENTRIES') ?? '200', 10);
+  const betaEnabled = env('BETA_ENABLED') === 'true';
 
   return {
     openRouterApiKey: apiKey.length > 0 ? apiKey : null,
@@ -62,5 +65,6 @@ export function loadConfig(cwd: string = process.cwd()): AppConfig {
     quotaDaily: Number.isFinite(quotaDaily) ? quotaDaily : 40,
     rateLimitPerMinute: Number.isFinite(rateLimitPerMinute) ? rateLimitPerMinute : 8,
     cacheMaxEntries: Number.isFinite(cacheMaxEntries) ? cacheMaxEntries : 200,
+    betaEnabled,
   };
 }

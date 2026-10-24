@@ -10,7 +10,11 @@
 //
 // Usage (from the panel):
 //   reportError(error, 'panel-tab-switch');
-export function reportError(error: Error, context: string, extra?: Record<string, unknown>): void {
+export function reportError(
+  error: Error,
+  context: string,
+  extra?: Record<string, unknown>,
+): void {
   const payload = {
     timestamp: new Date().toISOString(),
     error: error.message,
