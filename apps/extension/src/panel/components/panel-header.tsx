@@ -13,9 +13,9 @@ export function PanelHeader({
   libraryCount: number;
 }) {
   return (
-    <header className="mb-4">
+    <header className="mb-4" aria-label="Qeri header">
       <div className="flex items-center gap-3">
-        <QeriLogo className="h-9 w-9 rounded-lg" />
+        <QeriLogo className="h-9 w-9 rounded-lg" aria-hidden="true" />
         <div>
           <h1 className="text-base font-bold text-neutral-900 dark:text-neutral-100">Qeri</h1>
           <p className="text-[11px] text-neutral-500 dark:text-neutral-400">
@@ -27,8 +27,12 @@ export function PanelHeader({
       <nav
         role="tablist"
         aria-label="Qeri sections"
+        aria-describedby="qeri-header-desc"
         className="mt-3 flex w-full gap-1 rounded-lg bg-neutral-100 p-1 dark:bg-neutral-900"
       >
+        <p id="qeri-header-desc" className="sr-only">
+          Qeri side panel — toggle between Explain and Library sections
+        </p>
         <TabButton
           active={tab === 'explain'}
           onClick={() => onTabChange('explain')}
