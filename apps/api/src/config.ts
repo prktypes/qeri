@@ -15,7 +15,10 @@ export interface AppConfig {
   readonly model: string;
   readonly port: number;
   readonly quotaDaily: number;
+  /** Global burst cap per server process (Phase 3). Replaced by per-identity quotas
+   * in Phase 4 stage 2 when Supabase auth is wired (auth.uid()‑keyed). */
   readonly rateLimitPerMinute: number;
+  /** In‑memory cache size cap (Phase 3). Will be Supabase‑backed in Phase 4. */
   readonly cacheMaxEntries: number;
 }
 
