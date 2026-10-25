@@ -55,6 +55,16 @@ export default defineManifest({
     sandbox: undefined,
   },
 
+  // Phase 7 (Web store launch): store‑listed metadata.
+  // These are declared here so CRXJS/Vite generates the correct keys in the
+  // built manifest; the actual values are supplied in the Chrome Developer
+  // Dashboard (Privacy Policy URL, Terms of Service, Upgrade URL, etc.).
+  // Fill in the real URLs before submitting to the store.
+  homepage_url: 'https://qeri.ai',
+  // privacy_policy_url: 'https://qeri.ai/privacy',
+  // terms_of_service_url: 'https://qeri.ai/terms',
+  // upgrade_url: 'https://qeri.ai/upgrade',
+
   // Commands — Alt+Q opens the panel; listed in the store's keyboard shortcuts.
   commands: {
     'open-qeri-panel': {
