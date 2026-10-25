@@ -12,7 +12,11 @@ import type { SiteAdapter, SiteExtraction } from '../adapters/types';
  * knows "find elements matching adapter.postSelector, ask the adapter to extract".
  */
 
-export type OnExtraction = (extraction: SiteExtraction) => void;
+/**
+ * Callback invoked for each extracted post. Returning `false` means "the post is
+ * not ready to decorate yet" — the observer will re-schedule it on a later mutation.
+ */
+export type OnExtraction = (extraction: SiteExtraction) => boolean | void;
 
 const seen = new WeakSet<HTMLElement>();
 const pending = new Set<HTMLElement>();
@@ -92,6 +96,9 @@ function flushBatch(): void {
     if (adapter && !isOutermost(article, adapter.postSelector)) continue;
     const extraction = adapter?.extract(article) ?? null;
     if (!extraction) continue; // adapter decided: skip this element
-    onExtraction?.(extraction);
+    const decorated = onExtraction?.(extraction);
+    // The action bar was not painted yet: drop the dedupe entry so the next
+    // mutation batch retries this article instead of losing the chip forever.
+    if (decorated === false) seen.delete(article);
   }
 }

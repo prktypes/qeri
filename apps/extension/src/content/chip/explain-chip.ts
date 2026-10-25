@@ -55,14 +55,22 @@ const BTN_HTML = `<img src="${logoUrl}" alt="" aria-hidden="true" style="width:1
 /**
  * Decorate one article with an Explain chip appended to its action bar.
  * Idempotent: an article that already carries a chip is skipped untouched.
+ *
+ * Returns `true` once the chip is present, `false` when the action bar is not in
+ * the DOM yet. The observer uses that signal to re-schedule the article on the next
+ * mutation instead of blacklisting it forever (X hydrates its action bars late).
  */
-export function decorateArticle(extraction: SiteExtraction): void {
+export function decorateArticle(extraction: SiteExtraction): boolean {
   const { element: article, request } = extraction;
 
-  if (article.querySelector(`.${HOST_CLASS}`)) return;
+  if (article.querySelector(`.${HOST_CLASS}`)) return true;
 
-  const actionBar = article.querySelector<HTMLElement>('div[role="group"]');
-  if (!actionBar) return; // Chrome refines layout after first paint; a later mutation retries
+  // `div[role="group"]` is X's action bar (reply/repost/like/views). The bare
+  // `[role="group"]` fallback covers layout variants where the tag differs.
+  const actionBar =
+    article.querySelector<HTMLElement>('div[role="group"]') ??
+    article.querySelector<HTMLElement>('[role="group"]');
+  if (!actionBar) return false; // not painted yet — retry on a later mutation
 
   const host = document.createElement('div');
   host.className = HOST_CLASS;
@@ -87,6 +95,7 @@ export function decorateArticle(extraction: SiteExtraction): void {
   });
 
   actionBar.appendChild(host);
+  return true;
 }
 
 async function runExplainClick(args: {
