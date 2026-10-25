@@ -917,3 +917,37 @@ the Supabase sync stage unchanged.
   runbook landed inert under `supabase/` (policies authenticated-only, no UPDATE by
   design — artifacts regenerate, never mutate). Version stays 0.3.0 until cloud sync
   completes Phase 4. Gates: 47/47 tests, typecheck, lint, format, build, zip.
+- **2026-10-19 — Phase 4 stage 2 placeholders.** Supabase Edge Function stub
+  (`supabase/functions/explain/index.ts`), RLS migration (`0001_saved_explanations.sql`,
+  authenticated-only select/insert/delete, no UPDATE by design), activation runbook
+  (`supabase/README.md`), and documented env knobs in `apps/api/.env.example`. All
+  inert until the project URL + anon key arrive; `service_role` stays server-side only.
+- **2026-10-19 — Phase 5 first pass: reliability, privacy, security.** Manifest CSP,
+  API security-headers middleware, rate-limit transition notes, panel header a11y
+  (`aria-label` + screen-reader description), telemetry scaffold (`reportError`).
+- **2026-10-19 — Phase 6 first pass: private beta.** `BETA_ENABLED` →
+  `AppConfig.betaEnabled`, error telemetry wiring, beta onboarding placeholder
+  (comment-only to avoid a JSX namespace type error).
+- **2026-10-19 — Phase 7 first pass: store listing.** Manifest description rewritten
+  for the store, `homepage_url` added, store metadata notes recorded.
+- **2026-10-25 — Phase 8 first pass: site expansion.** Added an `example.com` adapter
+  implementing the same `SiteAdapter` contract, registered after the X adapter, with a
+  registry test proving dispatch and substring safety. Cost dashboard foundation was
+  already present via `GET /usage` (tokens, cache hits, estimated USD).
+- **2026-10-25 — field bug: extension failed to load, then no Explain chip.**
+  Two regressions from the Phase 7 manifest rewrite, both now guarded by tests:
+  1. `content_security_policy` declared `'unsafe-inline'` in `script-src`; Chrome MV3
+     refuses to load such an extension. Fix: removed the key entirely — Chrome's
+     secure MV3 default applies. A future CSP must avoid inline script allowances.
+  2. The same rewrite silently dropped `content_scripts`, `background` (module service
+     worker), `permissions` (`storage`, `sidePanel`) and `minimum_chrome_version`.
+     The build and all unit tests still passed, but Chrome never injected the content
+     script, so no chip could ever appear. Fix: restored every section and verified
+     `dist/manifest.json`. New `tests/unit/manifest.test.ts` pins the browser contract
+     (content script matches, worker registration, least-privilege permissions, no
+     `<all_urls>`, no unsafe CSP).
+  3. Hardened chip placement: X hydrates action bars after first paint, so
+     `decorateArticle` now returns `false` when the bar is missing and the observer
+     re-schedules the article instead of blacklisting it forever; added a
+     `[role="group"]` fallback and idempotency coverage.
+  Gates: 56/56 tests, typecheck, lint, format, build.
