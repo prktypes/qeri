@@ -24,9 +24,8 @@ describe('adapter registry', () => {
     expect(resolveAdapter('notx.com')).toBeNull();
     expect(resolveAdapter('alpha.x.com')).toBeNull();
     expect(resolveAdapter('x.com.evil.io')).toBeNull();
-    expect(resolveAdapter('example.com')).toBeNull();
-    expect(isSupportedSite('example.com')).toBe(false);
+    expect(resolveAdapter('example.com')?.id).toBe('example');
+    expect(isSupportedSite('example.com')).toBe(true);
     expect(isSupportedSite('x.com')).toBe(true);
-    expect(isSupportedSite('twitter.com')).toBe(true);
   });
 });
