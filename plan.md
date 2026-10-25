@@ -117,7 +117,7 @@ qeri/
 | 3     | AI explanation engine (OpenRouter)      | Real structured explanations; quota cache           | ✅     |
 | 4     | Accounts & saved knowledge (Supabase)   | Save + history, row-level security                  | ◐ s2   |
 | 5     | Reliability, privacy, security          | Rate limits, injection hardening, a11y, Sentry      | ◐ s1   |
-| 6     | Private beta polish                     | Real fixes from testers                             | ⬜     |
+| 6     | Private beta polish                     | Real fixes from testers                             | ◐ s1   |
 | 7     | Web store launch                        | Listing assets, privacy policy, review-safe builds  | ⬜     |
 | 8     | Post-launch: next sites, analytics      | articles/other extracts, cost dashboard             | ⬜     |
 
