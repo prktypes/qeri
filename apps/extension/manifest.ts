@@ -47,24 +47,6 @@ export default defineManifest({
   // permission will be swapped for the function's origin.
   host_permissions: ['http://localhost:8787/*'],
 
-  // Phase 5: explicit CSP — script src limited to 'self' + lucide CDN,
-  // connect-only to localhost:8787, 'unsafe-inline' only for Tailwind JIT/style.
-  content_security_policy: {
-    extension_pages:
-      "default-src 'self' data: blob; style-src 'self' 'unsafe-inline'; script-src 'self' 'unsafe-inline' https://cdn.lucide-react.com; connect-src 'self' http://localhost:8787; img-src 'self' data:; font-src 'self' data:; frame-src 'self'",
-    sandbox: undefined,
-  },
-
-  // Phase 7 (Web store launch): store‑listed metadata.
-  // These are declared here so CRXJS/Vite generates the correct keys in the
-  // built manifest; the actual values are supplied in the Chrome Developer
-  // Dashboard (Privacy Policy URL, Terms of Service, Upgrade URL, etc.).
-  // Fill in the real URLs before submitting to the store.
-  homepage_url: 'https://qeri.ai',
-  // privacy_policy_url: 'https://qeri.ai/privacy',
-  // terms_of_service_url: 'https://qeri.ai/terms',
-  // upgrade_url: 'https://qeri.ai/upgrade',
-
   // Commands — Alt+Q opens the panel; listed in the store's keyboard shortcuts.
   commands: {
     'open-qeri-panel': {
